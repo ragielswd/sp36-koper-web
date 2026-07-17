@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          aktif: boolean
+          created_at: string
+          id: string
+          nama: string
+          password_hash: string
+          role: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          aktif?: boolean
+          created_at?: string
+          id?: string
+          nama: string
+          password_hash: string
+          role?: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          aktif?: boolean
+          created_at?: string
+          id?: string
+          nama?: string
+          password_hash?: string
+          role?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       anggota: {
         Row: {
           aktif: boolean
