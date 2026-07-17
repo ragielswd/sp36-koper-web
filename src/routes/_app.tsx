@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { checkUnlocked, lockSite } from "@/lib/gate.functions";
+import { me, logout } from "@/lib/gate.functions";
 import {
   Sidebar,
   SidebarContent,
@@ -14,33 +14,36 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, PiggyBank, Landmark, FileBarChart2, LogOut, GraduationCap } from "lucide-react";
+import { LayoutDashboard, Users, PiggyBank, Landmark, FileBarChart2, LogOut, GraduationCap, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async () => {
-    const { unlocked } = await checkUnlocked();
-    if (!unlocked) throw redirect({ to: "/unlock" });
+    const user = await me();
+    if (!user) throw redirect({ to: "/unlock" });
+    return { user };
   },
   component: AppLayout,
 });
 
 const nav = [
-  { url: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { url: "/anggota", label: "Anggota", icon: Users },
-  { url: "/simpanan", label: "Simpanan", icon: PiggyBank },
-  { url: "/pinjaman", label: "Pinjaman", icon: Landmark },
-  { url: "/laporan", label: "Laporan", icon: FileBarChart2 },
+  { url: "/dashboard", label: "Dashboard", icon: LayoutDashboard, superOnly: false },
+  { url: "/anggota", label: "Anggota", icon: Users, superOnly: false },
+  { url: "/simpanan", label: "Simpanan", icon: PiggyBank, superOnly: false },
+  { url: "/pinjaman", label: "Pinjaman", icon: Landmark, superOnly: false },
+  { url: "/laporan", label: "Laporan", icon: FileBarChart2, superOnly: false },
+  { url: "/admin", label: "Kelola Admin", icon: ShieldCheck, superOnly: true },
 ];
 
 function AppLayout() {
   const router = useRouter();
-  const lock = useServerFn(lockSite);
+  const { user } = Route.useRouteContext();
+  const logoutFn = useServerFn(logout);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   async function handleSignOut() {
-    await lock();
+    await logoutFn();
     await router.navigate({ to: "/unlock", replace: true });
   }
 
@@ -63,7 +66,7 @@ function AppLayout() {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {nav.map((item) => {
+                  {nav.filter((n) => !n.superOnly || user?.role === "super").map((item) => {
                     const active = pathname === item.url || pathname.startsWith(item.url + "/");
                     return (
                       <SidebarMenuItem key={item.url}>
@@ -81,6 +84,10 @@ function AppLayout() {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="border-t">
+            <div className="px-2 py-1 group-data-[collapsible=icon]:hidden">
+              <div className="text-xs font-medium truncate">{user?.nama}</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{user?.role === "super" ? "Super Admin" : "Admin"}</div>
+            </div>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start">
               <LogOut className="w-4 h-4" />
               <span className="group-data-[collapsible=icon]:hidden">Keluar</span>
