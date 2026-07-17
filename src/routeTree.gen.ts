@@ -13,8 +13,11 @@ import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSimpananRouteImport } from './routes/_app.simpanan'
+import { Route as AppPinjamanRouteImport } from './routes/_app.pinjaman'
+import { Route as AppLaporanRouteImport } from './routes/_app.laporan'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppAnggotaRouteImport } from './routes/_app.anggota'
+import { Route as AppPinjamanIdRouteImport } from './routes/_app.pinjaman.$id'
 
 const UnlockRoute = UnlockRouteImport.update({
   id: '/unlock',
@@ -35,6 +38,16 @@ const AppSimpananRoute = AppSimpananRouteImport.update({
   path: '/simpanan',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPinjamanRoute = AppPinjamanRouteImport.update({
+  id: '/pinjaman',
+  path: '/pinjaman',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLaporanRoute = AppLaporanRouteImport.update({
+  id: '/laporan',
+  path: '/laporan',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -45,20 +58,31 @@ const AppAnggotaRoute = AppAnggotaRouteImport.update({
   path: '/anggota',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPinjamanIdRoute = AppPinjamanIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppPinjamanRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/unlock': typeof UnlockRoute
   '/anggota': typeof AppAnggotaRoute
   '/dashboard': typeof AppDashboardRoute
+  '/laporan': typeof AppLaporanRoute
+  '/pinjaman': typeof AppPinjamanRouteWithChildren
   '/simpanan': typeof AppSimpananRoute
+  '/pinjaman/$id': typeof AppPinjamanIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/unlock': typeof UnlockRoute
   '/anggota': typeof AppAnggotaRoute
   '/dashboard': typeof AppDashboardRoute
+  '/laporan': typeof AppLaporanRoute
+  '/pinjaman': typeof AppPinjamanRouteWithChildren
   '/simpanan': typeof AppSimpananRoute
+  '/pinjaman/$id': typeof AppPinjamanIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -67,13 +91,32 @@ export interface FileRoutesById {
   '/unlock': typeof UnlockRoute
   '/_app/anggota': typeof AppAnggotaRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/laporan': typeof AppLaporanRoute
+  '/_app/pinjaman': typeof AppPinjamanRouteWithChildren
   '/_app/simpanan': typeof AppSimpananRoute
+  '/_app/pinjaman/$id': typeof AppPinjamanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/unlock' | '/anggota' | '/dashboard' | '/simpanan'
+  fullPaths:
+    | '/'
+    | '/unlock'
+    | '/anggota'
+    | '/dashboard'
+    | '/laporan'
+    | '/pinjaman'
+    | '/simpanan'
+    | '/pinjaman/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/unlock' | '/anggota' | '/dashboard' | '/simpanan'
+  to:
+    | '/'
+    | '/unlock'
+    | '/anggota'
+    | '/dashboard'
+    | '/laporan'
+    | '/pinjaman'
+    | '/simpanan'
+    | '/pinjaman/$id'
   id:
     | '__root__'
     | '/'
@@ -81,7 +124,10 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/_app/anggota'
     | '/_app/dashboard'
+    | '/_app/laporan'
+    | '/_app/pinjaman'
     | '/_app/simpanan'
+    | '/_app/pinjaman/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -120,6 +166,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSimpananRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pinjaman': {
+      id: '/_app/pinjaman'
+      path: '/pinjaman'
+      fullPath: '/pinjaman'
+      preLoaderRoute: typeof AppPinjamanRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/laporan': {
+      id: '/_app/laporan'
+      path: '/laporan'
+      fullPath: '/laporan'
+      preLoaderRoute: typeof AppLaporanRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -134,18 +194,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnggotaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pinjaman/$id': {
+      id: '/_app/pinjaman/$id'
+      path: '/$id'
+      fullPath: '/pinjaman/$id'
+      preLoaderRoute: typeof AppPinjamanIdRouteImport
+      parentRoute: typeof AppPinjamanRoute
+    }
   }
 }
+
+interface AppPinjamanRouteChildren {
+  AppPinjamanIdRoute: typeof AppPinjamanIdRoute
+}
+
+const AppPinjamanRouteChildren: AppPinjamanRouteChildren = {
+  AppPinjamanIdRoute: AppPinjamanIdRoute,
+}
+
+const AppPinjamanRouteWithChildren = AppPinjamanRoute._addFileChildren(
+  AppPinjamanRouteChildren,
+)
 
 interface AppRouteChildren {
   AppAnggotaRoute: typeof AppAnggotaRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppLaporanRoute: typeof AppLaporanRoute
+  AppPinjamanRoute: typeof AppPinjamanRouteWithChildren
   AppSimpananRoute: typeof AppSimpananRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAnggotaRoute: AppAnggotaRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppLaporanRoute: AppLaporanRoute,
+  AppPinjamanRoute: AppPinjamanRouteWithChildren,
   AppSimpananRoute: AppSimpananRoute,
 }
 
