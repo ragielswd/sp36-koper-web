@@ -45,14 +45,19 @@ export const updateAdmin = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const s = await (await import("./gate.server")).requireSuper();
     const sb = await admin();
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    if (data.nama !== undefined) patch.nama = data.nama.trim();
-    if (data.role !== undefined) patch.role = data.role;
-    if (data.aktif !== undefined) patch.aktif = data.aktif;
     // Prevent self-lockout: cannot demote or deactivate yourself
     if (data.id === s.data.userId && (data.role === "admin" || data.aktif === false)) {
       throw new Error("Tidak dapat menurunkan role atau menonaktifkan akun Anda sendiri");
     }
+    const patch: {
+      nama?: string;
+      role?: "super" | "admin";
+      aktif?: boolean;
+      updated_at: string;
+    } = { updated_at: new Date().toISOString() };
+    if (data.nama !== undefined) patch.nama = data.nama.trim();
+    if (data.role !== undefined) patch.role = data.role;
+    if (data.aktif !== undefined) patch.aktif = data.aktif;
     const { error } = await sb.from("admin_users").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };

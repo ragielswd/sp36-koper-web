@@ -21,7 +21,7 @@ export const login = createServerFn({ method: "POST" })
     const { verifyPassword, getGateSession } = await import("./gate.server");
     if (!verifyPassword(data.password, user.password_hash)) return { ok: false as const };
     const s = await getGateSession();
-    await s.update({ userId: user.id, username: user.username, nama: user.nama, role: user.role });
+    await s.update({ userId: user.id, username: user.username, nama: user.nama, role: user.role as "super" | "admin" });
     return { ok: true as const };
   });
 
