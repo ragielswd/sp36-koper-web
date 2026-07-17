@@ -17,6 +17,7 @@ import { Route as AppPinjamanRouteImport } from './routes/_app.pinjaman'
 import { Route as AppLaporanRouteImport } from './routes/_app.laporan'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppAnggotaRouteImport } from './routes/_app.anggota'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppPinjamanIdRouteImport } from './routes/_app.pinjaman.$id'
 
 const UnlockRoute = UnlockRouteImport.update({
@@ -58,6 +59,11 @@ const AppAnggotaRoute = AppAnggotaRouteImport.update({
   path: '/anggota',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPinjamanIdRoute = AppPinjamanIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -67,6 +73,7 @@ const AppPinjamanIdRoute = AppPinjamanIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/unlock': typeof UnlockRoute
+  '/admin': typeof AppAdminRoute
   '/anggota': typeof AppAnggotaRoute
   '/dashboard': typeof AppDashboardRoute
   '/laporan': typeof AppLaporanRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/unlock': typeof UnlockRoute
+  '/admin': typeof AppAdminRoute
   '/anggota': typeof AppAnggotaRoute
   '/dashboard': typeof AppDashboardRoute
   '/laporan': typeof AppLaporanRoute
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/unlock': typeof UnlockRoute
+  '/_app/admin': typeof AppAdminRoute
   '/_app/anggota': typeof AppAnggotaRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/laporan': typeof AppLaporanRoute
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/unlock'
+    | '/admin'
     | '/anggota'
     | '/dashboard'
     | '/laporan'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/unlock'
+    | '/admin'
     | '/anggota'
     | '/dashboard'
     | '/laporan'
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/unlock'
+    | '/_app/admin'
     | '/_app/anggota'
     | '/_app/dashboard'
     | '/_app/laporan'
@@ -194,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnggotaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/pinjaman/$id': {
       id: '/_app/pinjaman/$id'
       path: '/$id'
@@ -217,6 +236,7 @@ const AppPinjamanRouteWithChildren = AppPinjamanRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
   AppAnggotaRoute: typeof AppAnggotaRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppLaporanRoute: typeof AppLaporanRoute
@@ -225,6 +245,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
   AppAnggotaRoute: AppAnggotaRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppLaporanRoute: AppLaporanRoute,
