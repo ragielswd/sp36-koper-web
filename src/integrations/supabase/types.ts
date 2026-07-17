@@ -14,7 +14,177 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      anggota: {
+        Row: {
+          aktif: boolean
+          catatan: string | null
+          created_at: string
+          id: string
+          jabatan: string | null
+          nama: string
+          nip: string | null
+          tanggal_bergabung: string
+          telepon: string | null
+          updated_at: string
+        }
+        Insert: {
+          aktif?: boolean
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          jabatan?: string | null
+          nama: string
+          nip?: string | null
+          tanggal_bergabung?: string
+          telepon?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aktif?: boolean
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          jabatan?: string | null
+          nama?: string
+          nip?: string | null
+          tanggal_bergabung?: string
+          telepon?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      angsuran: {
+        Row: {
+          bunga: number
+          catatan: string | null
+          created_at: string
+          denda: number
+          id: string
+          pinjaman_id: string
+          pokok: number
+          tanggal: string
+        }
+        Insert: {
+          bunga?: number
+          catatan?: string | null
+          created_at?: string
+          denda?: number
+          id?: string
+          pinjaman_id: string
+          pokok?: number
+          tanggal?: string
+        }
+        Update: {
+          bunga?: number
+          catatan?: string | null
+          created_at?: string
+          denda?: number
+          id?: string
+          pinjaman_id?: string
+          pokok?: number
+          tanggal?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "angsuran_pinjaman_id_fkey"
+            columns: ["pinjaman_id"]
+            isOneToOne: false
+            referencedRelation: "pinjaman"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pinjaman: {
+        Row: {
+          anggota_id: string
+          bunga_persen: number
+          bunga_tipe: string
+          catatan: string | null
+          created_at: string
+          id: string
+          pokok: number
+          status: string
+          tanggal_pinjam: string
+          tenor_bulan: number
+          updated_at: string
+        }
+        Insert: {
+          anggota_id: string
+          bunga_persen?: number
+          bunga_tipe?: string
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          pokok: number
+          status?: string
+          tanggal_pinjam?: string
+          tenor_bulan: number
+          updated_at?: string
+        }
+        Update: {
+          anggota_id?: string
+          bunga_persen?: number
+          bunga_tipe?: string
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          pokok?: number
+          status?: string
+          tanggal_pinjam?: string
+          tenor_bulan?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pinjaman_anggota_id_fkey"
+            columns: ["anggota_id"]
+            isOneToOne: false
+            referencedRelation: "anggota"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simpanan: {
+        Row: {
+          anggota_id: string
+          catatan: string | null
+          created_at: string
+          id: string
+          jenis: string
+          jumlah: number
+          tanggal: string
+          tipe: string
+        }
+        Insert: {
+          anggota_id: string
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          jenis: string
+          jumlah: number
+          tanggal?: string
+          tipe?: string
+        }
+        Update: {
+          anggota_id?: string
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          jenis?: string
+          jumlah?: number
+          tanggal?: string
+          tipe?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simpanan_anggota_id_fkey"
+            columns: ["anggota_id"]
+            isOneToOne: false
+            referencedRelation: "anggota"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
