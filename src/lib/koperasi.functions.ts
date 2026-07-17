@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireUnlocked } from "./gate.functions";
+
 
 // All server functions here are gated by requireUnlocked() and use the
 // service-role admin client (dynamic import; RLS is off for service_role).
@@ -11,7 +11,7 @@ async function admin() {
 
 // ---------- ANGGOTA ----------
 export const listAnggota = createServerFn({ method: "GET" }).handler(async () => {
-  await requireUnlocked();
+  await (await import("./gate.server")).requireUnlocked();
   const sb = await admin();
   const { data, error } = await sb.from("anggota").select("*").order("nama");
   if (error) throw new Error(error.message);
@@ -30,7 +30,7 @@ export const upsertAnggota = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     if (data.id) {
       const { id, ...rest } = data;
@@ -46,7 +46,7 @@ export const upsertAnggota = createServerFn({ method: "POST" })
 export const deleteAnggota = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { error } = await sb.from("anggota").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -55,7 +55,7 @@ export const deleteAnggota = createServerFn({ method: "POST" })
 
 // ---------- SIMPANAN ----------
 export const listSimpanan = createServerFn({ method: "GET" }).handler(async () => {
-  await requireUnlocked();
+  await (await import("./gate.server")).requireUnlocked();
   const sb = await admin();
   const { data, error } = await sb
     .from("simpanan")
@@ -75,7 +75,7 @@ export const createSimpanan = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { error } = await sb.from("simpanan").insert(data);
     if (error) throw new Error(error.message);
@@ -85,7 +85,7 @@ export const createSimpanan = createServerFn({ method: "POST" })
 export const deleteSimpanan = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { error } = await sb.from("simpanan").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -94,7 +94,7 @@ export const deleteSimpanan = createServerFn({ method: "POST" })
 
 // ---------- PINJAMAN ----------
 export const listPinjaman = createServerFn({ method: "GET" }).handler(async () => {
-  await requireUnlocked();
+  await (await import("./gate.server")).requireUnlocked();
   const sb = await admin();
   const { data, error } = await sb
     .from("pinjaman")
@@ -107,7 +107,7 @@ export const listPinjaman = createServerFn({ method: "GET" }).handler(async () =
 export const getPinjamanDetail = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { data: pin, error } = await sb
       .from("pinjaman")
@@ -135,7 +135,7 @@ export const createPinjaman = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { error } = await sb.from("pinjaman").insert(data);
     if (error) throw new Error(error.message);
@@ -145,7 +145,7 @@ export const createPinjaman = createServerFn({ method: "POST" })
 export const updatePinjamanStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; status: "aktif" | "lunas" | "macet" }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { error } = await sb
       .from("pinjaman")
@@ -158,7 +158,7 @@ export const updatePinjamanStatus = createServerFn({ method: "POST" })
 export const deletePinjaman = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { error } = await sb.from("pinjaman").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -176,7 +176,7 @@ export const createAngsuran = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { error } = await sb.from("angsuran").insert({ ...data, denda: data.denda ?? 0 });
     if (error) throw new Error(error.message);
@@ -186,7 +186,7 @@ export const createAngsuran = createServerFn({ method: "POST" })
 export const deleteAngsuran = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    await requireUnlocked();
+    await (await import("./gate.server")).requireUnlocked();
     const sb = await admin();
     const { error } = await sb.from("angsuran").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -195,7 +195,7 @@ export const deleteAngsuran = createServerFn({ method: "POST" })
 
 // ---------- DASHBOARD ----------
 export const dashboardRingkasan = createServerFn({ method: "GET" }).handler(async () => {
-  await requireUnlocked();
+  await (await import("./gate.server")).requireUnlocked();
   const sb = await admin();
   const [{ data: anggota }, { data: simpanan }, { data: pinjaman }, { data: angsuran }] = await Promise.all([
     sb.from("anggota").select("id,aktif"),
