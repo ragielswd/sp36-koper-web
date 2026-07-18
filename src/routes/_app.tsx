@@ -56,9 +56,7 @@ function AppLayout() {
         <Sidebar collapsible="icon">
           <SidebarHeader className="border-b">
             <div className="flex items-center gap-2 px-2 py-2">
-              <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-                <GraduationCap className="w-4 h-4" />
-              </div>
+              <img src={logoAsset.url} alt="Logo Koperasi" className="w-8 h-8 rounded-lg object-contain bg-white" />
               <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="text-sm font-semibold">Koperasi SMPN 36</span>
                 <span className="text-xs text-muted-foreground">Simpan Pinjam</span>
