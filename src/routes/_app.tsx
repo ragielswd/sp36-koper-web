@@ -67,7 +67,7 @@ function AppLayout() {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {nav.filter((n) => !n.superOnly || user?.role === "super").map((item) => {
+                  {nav.filter((n) => n.roles === "all" || (n.roles === "super" ? user?.role === "super" : user?.role !== "super")).map((item) => {
                     const active = pathname === item.url || pathname.startsWith(item.url + "/");
                     return (
                       <SidebarMenuItem key={item.url}>
