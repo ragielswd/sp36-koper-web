@@ -18,6 +18,8 @@ import { LayoutDashboard, Users, PiggyBank, Landmark, FileBarChart2, LogOut, Gra
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 
+import logoAsset from "@/assets/logo-koperasi.png.asset.json";
+
 export const Route = createFileRoute("/_app")({
   beforeLoad: async () => {
     const user = await me();
@@ -27,13 +29,14 @@ export const Route = createFileRoute("/_app")({
   component: AppLayout,
 });
 
+// roles: 'all' visible to everyone; 'super' only super; 'admin' only non-super
 const nav = [
-  { url: "/dashboard", label: "Dashboard", icon: LayoutDashboard, superOnly: false },
-  { url: "/anggota", label: "Anggota", icon: Users, superOnly: false },
-  { url: "/simpanan", label: "Simpanan", icon: PiggyBank, superOnly: false },
-  { url: "/pinjaman", label: "Pinjaman", icon: Landmark, superOnly: false },
-  { url: "/laporan", label: "Laporan", icon: FileBarChart2, superOnly: false },
-  { url: "/admin", label: "Kelola Admin", icon: ShieldCheck, superOnly: true },
+  { url: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: "all" as const },
+  { url: "/anggota", label: "Anggota", icon: Users, roles: "admin" as const },
+  { url: "/simpanan", label: "Simpanan", icon: PiggyBank, roles: "admin" as const },
+  { url: "/pinjaman", label: "Pinjaman", icon: Landmark, roles: "admin" as const },
+  { url: "/laporan", label: "Laporan", icon: FileBarChart2, roles: "all" as const },
+  { url: "/admin", label: "Kelola Admin", icon: ShieldCheck, roles: "super" as const },
 ];
 
 function AppLayout() {
