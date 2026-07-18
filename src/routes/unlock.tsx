@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { KeyRound, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import logoAsset from "@/assets/logo-koperasi.png.asset.json";
 
 export const Route = createFileRoute("/unlock")({
   head: () => ({ meta: [{ title: "Masuk — Koperasi SMPN 36" }] }),
@@ -38,8 +39,8 @@ function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-3">
-          <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-            <KeyRound className="w-6 h-6" />
+          <div className="mx-auto w-20 h-20 rounded-2xl bg-white shadow-sm border flex items-center justify-center overflow-hidden">
+            <img src={logoAsset.url} alt="Logo Koperasi SMPN 36" className="w-full h-full object-contain" />
           </div>
           <div>
             <CardTitle className="text-xl">Koperasi SMPN 36</CardTitle>

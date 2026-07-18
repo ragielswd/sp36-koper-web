@@ -18,6 +18,8 @@ import { LayoutDashboard, Users, PiggyBank, Landmark, FileBarChart2, LogOut, Gra
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 
+import logoAsset from "@/assets/logo-koperasi.png.asset.json";
+
 export const Route = createFileRoute("/_app")({
   beforeLoad: async () => {
     const user = await me();
@@ -27,13 +29,14 @@ export const Route = createFileRoute("/_app")({
   component: AppLayout,
 });
 
+// roles: 'all' visible to everyone; 'super' only super; 'admin' only non-super
 const nav = [
-  { url: "/dashboard", label: "Dashboard", icon: LayoutDashboard, superOnly: false },
-  { url: "/anggota", label: "Anggota", icon: Users, superOnly: false },
-  { url: "/simpanan", label: "Simpanan", icon: PiggyBank, superOnly: false },
-  { url: "/pinjaman", label: "Pinjaman", icon: Landmark, superOnly: false },
-  { url: "/laporan", label: "Laporan", icon: FileBarChart2, superOnly: false },
-  { url: "/admin", label: "Kelola Admin", icon: ShieldCheck, superOnly: true },
+  { url: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: "all" as const },
+  { url: "/anggota", label: "Anggota", icon: Users, roles: "admin" as const },
+  { url: "/simpanan", label: "Simpanan", icon: PiggyBank, roles: "admin" as const },
+  { url: "/pinjaman", label: "Pinjaman", icon: Landmark, roles: "admin" as const },
+  { url: "/laporan", label: "Laporan", icon: FileBarChart2, roles: "all" as const },
+  { url: "/admin", label: "Kelola Admin", icon: ShieldCheck, roles: "super" as const },
 ];
 
 function AppLayout() {
@@ -53,9 +56,7 @@ function AppLayout() {
         <Sidebar collapsible="icon">
           <SidebarHeader className="border-b">
             <div className="flex items-center gap-2 px-2 py-2">
-              <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-                <GraduationCap className="w-4 h-4" />
-              </div>
+              <img src={logoAsset.url} alt="Logo Koperasi" className="w-8 h-8 rounded-lg object-contain bg-white" />
               <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="text-sm font-semibold">Koperasi SMPN 36</span>
                 <span className="text-xs text-muted-foreground">Simpan Pinjam</span>
@@ -66,7 +67,7 @@ function AppLayout() {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {nav.filter((n) => !n.superOnly || user?.role === "super").map((item) => {
+                  {nav.filter((n) => n.roles === "all" || (n.roles === "super" ? user?.role === "super" : user?.role !== "super")).map((item) => {
                     const active = pathname === item.url || pathname.startsWith(item.url + "/");
                     return (
                       <SidebarMenuItem key={item.url}>
