@@ -130,7 +130,7 @@ export const getPinjamanDetail = createServerFn({ method: "GET" })
     const sb = await admin();
     const { data: pin, error } = await sb
       .from("pinjaman")
-      .select("*, anggota:anggota_id(id,nama,nip)")
+      .select("*, anggota:anggota_id(id,nama,nip,jabatan)")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
