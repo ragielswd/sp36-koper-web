@@ -1,0 +1,1 @@
+ALTER TABLE public.pinjaman ADD COLUMN IF NOT EXISTS tgl_jatuh_tempo integer CHECK (tgl_jatuh_tempo BETWEEN 1 AND 31);
