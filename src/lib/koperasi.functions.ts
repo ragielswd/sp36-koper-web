@@ -77,7 +77,26 @@ export const createSimpanan = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await (await import("./gate.server")).requireAdmin();
     const sb = await admin();
-    const { error } = await sb.from("simpanan").insert(data);
+    const { data: inserted, error } = await sb.from("simpanan").insert(data).select("*, anggota:anggota_id(id,nama,nip)").single();
+    if (error) throw new Error(error.message);
+    return { ok: true, row: inserted };
+  });
+
+export const updateSimpanan = createServerFn({ method: "POST" })
+  .inputValidator((d: {
+    id: string;
+    anggota_id: string;
+    jenis: "pokok" | "wajib" | "sukarela";
+    tipe: "setor" | "tarik";
+    jumlah: number;
+    tanggal: string;
+    catatan?: string | null;
+  }) => d)
+  .handler(async ({ data }) => {
+    await (await import("./gate.server")).requireAdmin();
+    const sb = await admin();
+    const { id, ...rest } = data;
+    const { error } = await sb.from("simpanan").update(rest).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -132,12 +151,39 @@ export const createPinjaman = createServerFn({ method: "POST" })
     bunga_tipe: "flat" | "menurun" | "tetap" | "tanpa";
     tenor_bulan: number;
     tanggal_pinjam: string;
+    tgl_jatuh_tempo?: number | null;
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
     await (await import("./gate.server")).requireAdmin();
     const sb = await admin();
-    const { error } = await sb.from("pinjaman").insert(data);
+    const { data: inserted, error } = await (sb.from("pinjaman") as any)
+      .insert(data)
+      .select("*, anggota:anggota_id(id,nama,nip,jabatan)")
+      .single();
+    if (error) throw new Error(error.message);
+    return { ok: true, row: inserted };
+  });
+
+export const updatePinjaman = createServerFn({ method: "POST" })
+  .inputValidator((d: {
+    id: string;
+    anggota_id: string;
+    pokok: number;
+    bunga_persen: number;
+    bunga_tipe: "flat" | "menurun" | "tetap" | "tanpa";
+    tenor_bulan: number;
+    tanggal_pinjam: string;
+    tgl_jatuh_tempo?: number | null;
+    catatan?: string | null;
+  }) => d)
+  .handler(async ({ data }) => {
+    await (await import("./gate.server")).requireAdmin();
+    const sb = await admin();
+    const { id, ...rest } = data;
+    const { error } = await (sb.from("pinjaman") as any)
+      .update({ ...rest, updated_at: new Date().toISOString() })
+      .eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
