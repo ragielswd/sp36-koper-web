@@ -139,6 +139,7 @@ export type Database = {
           status: string
           tanggal_pinjam: string
           tenor_bulan: number
+          tgl_jatuh_tempo: number | null
           updated_at: string
         }
         Insert: {
@@ -152,6 +153,7 @@ export type Database = {
           status?: string
           tanggal_pinjam?: string
           tenor_bulan: number
+          tgl_jatuh_tempo?: number | null
           updated_at?: string
         }
         Update: {
@@ -165,6 +167,7 @@ export type Database = {
           status?: string
           tanggal_pinjam?: string
           tenor_bulan?: number
+          tgl_jatuh_tempo?: number | null
           updated_at?: string
         }
         Relationships: [
