@@ -16,7 +16,7 @@ import { formatTanggal, rupiah, hitungAngsuranBulanan } from "@/lib/format";
 import { toast } from "sonner";
 import logoAsset from "@/assets/logo-koperasi.png.asset.json";
 
-export const Route = createFileRoute("/_app/pinjaman/$id")({
+export const Route = createFileRoute("/_app/pinjaman_/$id")({
   head: () => ({ meta: [{ title: "Detail Pinjaman — Koperasi SMPN 36" }] }),
   component: PinjamanDetailPage,
 });
