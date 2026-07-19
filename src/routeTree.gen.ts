@@ -18,7 +18,7 @@ import { Route as AppLaporanRouteImport } from './routes/_app.laporan'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppAnggotaRouteImport } from './routes/_app.anggota'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
-import { Route as AppPinjamanIdRouteImport } from './routes/_app.pinjaman.$id'
+import { Route as AppPinjamanIdRouteImport } from './routes/_app.pinjaman_.$id'
 
 const UnlockRoute = UnlockRouteImport.update({
   id: '/unlock',
@@ -65,9 +65,9 @@ const AppAdminRoute = AppAdminRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 const AppPinjamanIdRoute = AppPinjamanIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppPinjamanRoute,
+  id: '/pinjaman_/$id',
+  path: '/pinjaman/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -77,7 +77,7 @@ export interface FileRoutesByFullPath {
   '/anggota': typeof AppAnggotaRoute
   '/dashboard': typeof AppDashboardRoute
   '/laporan': typeof AppLaporanRoute
-  '/pinjaman': typeof AppPinjamanRouteWithChildren
+  '/pinjaman': typeof AppPinjamanRoute
   '/simpanan': typeof AppSimpananRoute
   '/pinjaman/$id': typeof AppPinjamanIdRoute
 }
@@ -88,7 +88,7 @@ export interface FileRoutesByTo {
   '/anggota': typeof AppAnggotaRoute
   '/dashboard': typeof AppDashboardRoute
   '/laporan': typeof AppLaporanRoute
-  '/pinjaman': typeof AppPinjamanRouteWithChildren
+  '/pinjaman': typeof AppPinjamanRoute
   '/simpanan': typeof AppSimpananRoute
   '/pinjaman/$id': typeof AppPinjamanIdRoute
 }
@@ -101,9 +101,9 @@ export interface FileRoutesById {
   '/_app/anggota': typeof AppAnggotaRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/laporan': typeof AppLaporanRoute
-  '/_app/pinjaman': typeof AppPinjamanRouteWithChildren
+  '/_app/pinjaman': typeof AppPinjamanRoute
   '/_app/simpanan': typeof AppSimpananRoute
-  '/_app/pinjaman/$id': typeof AppPinjamanIdRoute
+  '/_app/pinjaman_/$id': typeof AppPinjamanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,7 +139,7 @@ export interface FileRouteTypes {
     | '/_app/laporan'
     | '/_app/pinjaman'
     | '/_app/simpanan'
-    | '/_app/pinjaman/$id'
+    | '/_app/pinjaman_/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -213,35 +213,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/pinjaman/$id': {
-      id: '/_app/pinjaman/$id'
-      path: '/$id'
+    '/_app/pinjaman_/$id': {
+      id: '/_app/pinjaman_/$id'
+      path: '/pinjaman/$id'
       fullPath: '/pinjaman/$id'
       preLoaderRoute: typeof AppPinjamanIdRouteImport
-      parentRoute: typeof AppPinjamanRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
-
-interface AppPinjamanRouteChildren {
-  AppPinjamanIdRoute: typeof AppPinjamanIdRoute
-}
-
-const AppPinjamanRouteChildren: AppPinjamanRouteChildren = {
-  AppPinjamanIdRoute: AppPinjamanIdRoute,
-}
-
-const AppPinjamanRouteWithChildren = AppPinjamanRoute._addFileChildren(
-  AppPinjamanRouteChildren,
-)
 
 interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppAnggotaRoute: typeof AppAnggotaRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppLaporanRoute: typeof AppLaporanRoute
-  AppPinjamanRoute: typeof AppPinjamanRouteWithChildren
+  AppPinjamanRoute: typeof AppPinjamanRoute
   AppSimpananRoute: typeof AppSimpananRoute
+  AppPinjamanIdRoute: typeof AppPinjamanIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -249,8 +238,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppAnggotaRoute: AppAnggotaRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppLaporanRoute: AppLaporanRoute,
-  AppPinjamanRoute: AppPinjamanRouteWithChildren,
+  AppPinjamanRoute: AppPinjamanRoute,
   AppSimpananRoute: AppSimpananRoute,
+  AppPinjamanIdRoute: AppPinjamanIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -263,13 +253,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
