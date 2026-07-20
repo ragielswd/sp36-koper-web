@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSimpananRouteImport } from './routes/_app.simpanan'
 import { Route as AppPinjamanRouteImport } from './routes/_app.pinjaman'
 import { Route as AppLaporanRouteImport } from './routes/_app.laporan'
+import { Route as AppDatabaseRouteImport } from './routes/_app.database'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppAnggotaRouteImport } from './routes/_app.anggota'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
@@ -49,6 +50,11 @@ const AppLaporanRoute = AppLaporanRouteImport.update({
   path: '/laporan',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDatabaseRoute = AppDatabaseRouteImport.update({
+  id: '/database',
+  path: '/database',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AppAdminRoute
   '/anggota': typeof AppAnggotaRoute
   '/dashboard': typeof AppDashboardRoute
+  '/database': typeof AppDatabaseRoute
   '/laporan': typeof AppLaporanRoute
   '/pinjaman': typeof AppPinjamanRoute
   '/simpanan': typeof AppSimpananRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AppAdminRoute
   '/anggota': typeof AppAnggotaRoute
   '/dashboard': typeof AppDashboardRoute
+  '/database': typeof AppDatabaseRoute
   '/laporan': typeof AppLaporanRoute
   '/pinjaman': typeof AppPinjamanRoute
   '/simpanan': typeof AppSimpananRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/_app/admin': typeof AppAdminRoute
   '/_app/anggota': typeof AppAnggotaRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/database': typeof AppDatabaseRoute
   '/_app/laporan': typeof AppLaporanRoute
   '/_app/pinjaman': typeof AppPinjamanRoute
   '/_app/simpanan': typeof AppSimpananRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/anggota'
     | '/dashboard'
+    | '/database'
     | '/laporan'
     | '/pinjaman'
     | '/simpanan'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/anggota'
     | '/dashboard'
+    | '/database'
     | '/laporan'
     | '/pinjaman'
     | '/simpanan'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_app/admin'
     | '/_app/anggota'
     | '/_app/dashboard'
+    | '/_app/database'
     | '/_app/laporan'
     | '/_app/pinjaman'
     | '/_app/simpanan'
@@ -192,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLaporanRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/database': {
+      id: '/_app/database'
+      path: '/database'
+      fullPath: '/database'
+      preLoaderRoute: typeof AppDatabaseRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -227,6 +246,7 @@ interface AppRouteChildren {
   AppAdminRoute: typeof AppAdminRoute
   AppAnggotaRoute: typeof AppAnggotaRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppDatabaseRoute: typeof AppDatabaseRoute
   AppLaporanRoute: typeof AppLaporanRoute
   AppPinjamanRoute: typeof AppPinjamanRoute
   AppSimpananRoute: typeof AppSimpananRoute
@@ -237,6 +257,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAdminRoute: AppAdminRoute,
   AppAnggotaRoute: AppAnggotaRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppDatabaseRoute: AppDatabaseRoute,
   AppLaporanRoute: AppLaporanRoute,
   AppPinjamanRoute: AppPinjamanRoute,
   AppSimpananRoute: AppSimpananRoute,

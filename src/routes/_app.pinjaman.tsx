@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listPinjaman, createPinjaman, updatePinjaman, deletePinjaman, listAnggota, updatePinjamanStatus } from "@/lib/koperasi.functions";
@@ -6,22 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DeleteConfirm } from "@/components/delete-confirm";
 import { useState } from "react";
-import { Plus, Trash2, Eye, Pencil, Printer } from "lucide-react";
+import { Plus, Trash2, Eye, Pencil, Printer, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { formatTanggal, rupiah, hitungAngsuranBulanan } from "@/lib/format";
 import { toast } from "sonner";
 import { MoneyInput } from "@/components/money-input";
 import { printHtml } from "@/lib/print";
 import { renderSuratPerjanjian } from "@/lib/dokumen";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/pinjaman")({
-  head: () => ({ meta: [{ title: "Pinjaman — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Pinjaman — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: PinjamanPage,
 });
 
@@ -50,7 +51,27 @@ function emptyForm(): FormState {
   };
 }
 
+/**
+ * Hitung berapa hari lagi jatuh tempo bulanan aktif. Jika tanggal jatuh
+ * tempo bulan ini sudah lewat, gunakan bulan berikutnya. Return null jika
+ * tidak ada tgl_jatuh_tempo.
+ */
+function hariMenujuJatuhTempo(tgl?: number | null): number | null {
+  if (!tgl) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const y = today.getFullYear();
+  const m = today.getMonth();
+  let due = new Date(y, m, tgl);
+  if (due < today) due = new Date(y, m + 1, tgl);
+  return Math.round((due.getTime() - today.getTime()) / 86400000);
+}
+
 function PinjamanPage() {
+  const { user } = useRouteContext({ from: "/_app" });
+  const operator = user?.nama ?? "Petugas";
+  const isSuper = user?.role === "super";
+
   const qc = useQueryClient();
   const listFn = useServerFn(listPinjaman);
   const anggotaFn = useServerFn(listAnggota);
@@ -103,6 +124,7 @@ function PinjamanPage() {
         tglJatuhTempo: vars.tgl_jatuh_tempo,
         angsuranBulanan: est.total,
         nomor: row.id ?? "",
+        operator,
       }));
     },
     onError: (e: Error) => toast.error(e.message),
@@ -120,12 +142,13 @@ function PinjamanPage() {
   });
 
   const delM = useMutation({
-    mutationFn: (id: string) => delFn({ data: { id } }),
+    mutationFn: (d: { id: string; superPassword?: string }) => delFn({ data: d }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pinjaman"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Pinjaman dihapus");
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const statusM = useMutation({
@@ -147,6 +170,7 @@ function PinjamanPage() {
       tglJatuhTempo: p.tgl_jatuh_tempo,
       angsuranBulanan: est.total,
       nomor: p.id,
+      operator,
     }));
   }
 
@@ -175,6 +199,87 @@ function PinjamanPage() {
   const preview = form.pokok
     ? hitungAngsuranBulanan(Number(form.pokok), Number(form.bunga_persen) || 0, Number(form.tenor_bulan) || 1, form.bunga_tipe)
     : null;
+
+  const pinjamanAktif = (pinjaman as any[]).filter((p) => p.status !== "lunas");
+  const pinjamanLunas = (pinjaman as any[]).filter((p) => p.status === "lunas");
+
+  function renderRow(p: any) {
+    const totalBayar = (p.angsuran ?? []).reduce((n: number, a: any) => n + Number(a.pokok), 0);
+    const sisa = Number(p.pokok) - totalBayar;
+    const hari = p.status === "aktif" ? hariMenujuJatuhTempo(p.tgl_jatuh_tempo) : null;
+    const warn = hari !== null && hari <= 3;
+    return (
+      <TableRow key={p.id} className={cn(warn && "bg-amber-50/60")}>
+        <TableCell>{formatTanggal(p.tanggal_pinjam)}</TableCell>
+        <TableCell className="font-medium">{p.anggota?.nama ?? "-"}</TableCell>
+        <TableCell className="text-right">{rupiah(p.pokok)}</TableCell>
+        <TableCell className="text-muted-foreground">{p.tenor_bulan} bln</TableCell>
+        <TableCell>
+          {p.tgl_jatuh_tempo ? (
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">tiap tgl. {p.tgl_jatuh_tempo}</span>
+              {warn && (
+                <Badge variant="destructive" className="gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  {hari === 0 ? "hari ini" : hari && hari < 0 ? "lewat" : `${hari} hari lagi`}
+                </Badge>
+              )}
+            </div>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </TableCell>
+        <TableCell className="text-right font-medium">{rupiah(sisa)}</TableCell>
+        <TableCell>
+          <Select value={p.status} onValueChange={(v: any) => statusM.mutate({ id: p.id, status: v })}>
+            <SelectTrigger className="h-8 w-28">
+              <SelectValue>
+                {p.status === "aktif" && <Badge>Aktif</Badge>}
+                {p.status === "lunas" && <Badge variant="secondary">Lunas</Badge>}
+                {p.status === "macet" && <Badge variant="destructive">Macet</Badge>}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="aktif">Aktif</SelectItem>
+              <SelectItem value="lunas">Lunas</SelectItem>
+              <SelectItem value="macet">Macet</SelectItem>
+            </SelectContent>
+          </Select>
+        </TableCell>
+        <TableCell>
+          <div className="flex gap-1">
+            <Button asChild size="icon" variant="ghost" title="Detail">
+              <Link to="/pinjaman/$id" params={{ id: p.id }}><Eye className="w-4 h-4" /></Link>
+            </Button>
+            <Button size="icon" variant="ghost" onClick={() => openEdit(p)} title="Edit"><Pencil className="w-4 h-4" /></Button>
+            <Button size="icon" variant="ghost" onClick={() => cetakUlangPerjanjian(p)} title="Cetak surat perjanjian"><Printer className="w-4 h-4" /></Button>
+            <DeleteConfirm
+              isSuper={isSuper}
+              title="Hapus pinjaman?"
+              description="Termasuk seluruh riwayat angsuran."
+              onConfirm={(pw) => delM.mutateAsync({ id: p.id, superPassword: pw })}
+              trigger={<Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button>}
+            />
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  const tableHeader = (
+    <TableHeader>
+      <TableRow>
+        <TableHead>Tanggal</TableHead>
+        <TableHead>Anggota</TableHead>
+        <TableHead className="text-right">Pokok</TableHead>
+        <TableHead>Tenor</TableHead>
+        <TableHead>Jatuh Tempo</TableHead>
+        <TableHead className="text-right">Sisa</TableHead>
+        <TableHead>Status</TableHead>
+        <TableHead className="w-0">Aksi</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
 
   return (
     <div className="space-y-4">
@@ -252,70 +357,41 @@ function PinjamanPage() {
       </div>
 
       <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0 py-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-primary" />
+            Pinjaman Aktif <span className="text-muted-foreground text-sm font-normal">({pinjamanAktif.length})</span>
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Baris kuning: jatuh tempo ≤ 3 hari.</p>
+        </CardHeader>
         <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Tanggal</TableHead>
-                <TableHead>Anggota</TableHead>
-                <TableHead className="text-right">Pokok</TableHead>
-                <TableHead>Tenor</TableHead>
-                <TableHead>Jatuh Tempo</TableHead>
-                <TableHead className="text-right">Sisa</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-0">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
+            {tableHeader}
             <TableBody>
-              {(pinjaman as any[]).length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">Belum ada pinjaman.</TableCell></TableRow>
+              {pinjamanAktif.length === 0 && (
+                <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">Tidak ada pinjaman aktif.</TableCell></TableRow>
               )}
-              {(pinjaman as any[]).map((p) => {
-                const totalBayar = (p.angsuran ?? []).reduce((n: number, a: any) => n + Number(a.pokok), 0);
-                const sisa = Number(p.pokok) - totalBayar;
-                return (
-                  <TableRow key={p.id}>
-                    <TableCell>{formatTanggal(p.tanggal_pinjam)}</TableCell>
-                    <TableCell className="font-medium">{p.anggota?.nama ?? "-"}</TableCell>
-                    <TableCell className="text-right">{rupiah(p.pokok)}</TableCell>
-                    <TableCell className="text-muted-foreground">{p.tenor_bulan} bln</TableCell>
-                    <TableCell className="text-muted-foreground">{p.tgl_jatuh_tempo ? `tiap tgl. ${p.tgl_jatuh_tempo}` : "-"}</TableCell>
-                    <TableCell className="text-right font-medium">{rupiah(sisa)}</TableCell>
-                    <TableCell>
-                      <Select value={p.status} onValueChange={(v: any) => statusM.mutate({ id: p.id, status: v })}>
-                        <SelectTrigger className="h-8 w-28">
-                          <SelectValue>
-                            {p.status === "aktif" && <Badge>Aktif</Badge>}
-                            {p.status === "lunas" && <Badge variant="secondary">Lunas</Badge>}
-                            {p.status === "macet" && <Badge variant="destructive">Macet</Badge>}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="aktif">Aktif</SelectItem>
-                          <SelectItem value="lunas">Lunas</SelectItem>
-                          <SelectItem value="macet">Macet</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button asChild size="icon" variant="ghost" title="Detail">
-                          <Link to="/pinjaman/$id" params={{ id: p.id }}><Eye className="w-4 h-4" /></Link>
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => openEdit(p)} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => cetakUlangPerjanjian(p)} title="Cetak surat perjanjian"><Printer className="w-4 h-4" /></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Hapus pinjaman?</AlertDialogTitle><AlertDialogDescription>Termasuk seluruh riwayat angsuran.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Batal</AlertDialogCancel><AlertDialogAction onClick={() => delM.mutate(p.id)}>Hapus</AlertDialogAction></AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {pinjamanAktif.map(renderRow)}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            Pinjaman Lunas <span className="text-muted-foreground text-sm font-normal">({pinjamanLunas.length})</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            {tableHeader}
+            <TableBody>
+              {pinjamanLunas.length === 0 && (
+                <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">Belum ada pinjaman lunas.</TableCell></TableRow>
+              )}
+              {pinjamanLunas.map(renderRow)}
             </TableBody>
           </Table>
         </CardContent>

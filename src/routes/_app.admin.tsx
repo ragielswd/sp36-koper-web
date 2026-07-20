@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_app/admin")({
     const user = await me();
     if (!user || user.role !== "super") throw redirect({ to: "/dashboard" });
   },
-  head: () => ({ meta: [{ title: "Kelola Admin — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Kelola Admin — Koperasi SMP Negeri 36 Samarinda" }] }),
   loader: ({ context }) =>
     context.queryClient.ensureQueryData({ queryKey: ["admins"], queryFn: () => listAdmins() }),
   component: AdminPage,

@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 import logoAsset from "@/assets/logo-koperasi.png.asset.json";
 
 export const Route = createFileRoute("/unlock")({
-  head: () => ({ meta: [{ title: "Masuk — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Masuk — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: LoginPage,
 });
 
@@ -40,10 +40,10 @@ function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-3">
           <div className="mx-auto w-20 h-20 rounded-2xl bg-white shadow-sm border flex items-center justify-center overflow-hidden">
-            <img src={logoAsset.url} alt="Logo Koperasi SMPN 36" className="w-full h-full object-contain" />
+            <img src={logoAsset.url} alt="Logo Koperasi SMP Negeri 36 Samarinda" className="w-full h-full object-contain" />
           </div>
           <div>
-            <CardTitle className="text-xl">Koperasi SMPN 36</CardTitle>
+            <CardTitle className="text-xl">Koperasi SMP Negeri 36 Samarinda</CardTitle>
             <CardDescription>Simpan Pinjam — Panel Admin</CardDescription>
           </div>
         </CardHeader>

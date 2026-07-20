@@ -48,3 +48,36 @@ export async function requireSuper() {
   if (s.data.role !== "super") throw new Error("Akses ditolak: hanya super admin.");
   return s;
 }
+
+/**
+ * Verify that `password` matches any active super admin's password.
+ * Used to require super-admin confirmation for destructive actions
+ * performed by regular admins.
+ */
+export async function verifySuperPassword(password: string): Promise<boolean> {
+  if (!password) return false;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("admin_users")
+    .select("password_hash")
+    .eq("role", "super")
+    .eq("aktif", true);
+  if (!data || data.length === 0) return false;
+  for (const u of data) {
+    if (verifyPassword(password, u.password_hash)) return true;
+  }
+  return false;
+}
+
+/**
+ * If caller is not super, require a valid super admin password to proceed.
+ * Throws with a Bahasa Indonesia message on failure.
+ */
+export async function requireSuperOrPassword(password?: string) {
+  const s = await requireAdmin();
+  if (s.data.role === "super") return s;
+  if (!password) throw new Error("Konfirmasi super admin diperlukan: masukkan password akun super admin.");
+  const ok = await verifySuperPassword(password);
+  if (!ok) throw new Error("Password super admin salah.");
+  return s;
+}

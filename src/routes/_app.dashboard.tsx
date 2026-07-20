@@ -8,7 +8,7 @@ import { Users, PiggyBank, Landmark, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
 
 export const Route = createFileRoute("/_app/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: DashboardPage,
 });
 

@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Printer, FileSpreadsheet, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/_app/laporan")({
-  head: () => ({ meta: [{ title: "Laporan — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Laporan — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: LaporanPage,
 });
 
@@ -151,7 +151,7 @@ function LaporanPage() {
   function exportExcel() {
     const wb = XLSX.utils.book_new();
     const info = [
-      ["Koperasi Simpan Pinjam SMP Negeri 36"],
+      ["Koperasi Simpan Pinjam SMP Negeri 36 Samarinda"],
       [viewLabel],
       ["Dicetak", new Date().toLocaleString("id-ID")],
       ["Periode", `${f.dari || "awal"} s/d ${f.sampai || "sekarang"}`],

@@ -14,7 +14,11 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, PiggyBank, Landmark, FileBarChart2, LogOut, GraduationCap, ShieldCheck } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { LayoutDashboard, Users, PiggyBank, Landmark, FileBarChart2, LogOut, ShieldCheck, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -29,7 +33,6 @@ export const Route = createFileRoute("/_app")({
   component: AppLayout,
 });
 
-// roles: 'all' visible to everyone; 'super' only super; 'admin' only non-super
 const nav = [
   { url: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: "all" as const },
   { url: "/anggota", label: "Anggota", icon: Users, roles: "admin" as const },
@@ -37,6 +40,7 @@ const nav = [
   { url: "/pinjaman", label: "Pinjaman", icon: Landmark, roles: "admin" as const },
   { url: "/laporan", label: "Laporan", icon: FileBarChart2, roles: "all" as const },
   { url: "/admin", label: "Kelola Admin", icon: ShieldCheck, roles: "super" as const },
+  { url: "/database", label: "Kelola Database", icon: Database, roles: "super" as const },
 ];
 
 function AppLayout() {
@@ -56,9 +60,9 @@ function AppLayout() {
         <Sidebar collapsible="icon">
           <SidebarHeader className="border-b">
             <div className="flex items-center gap-2 px-2 py-2">
-              <img src={logoAsset.url} alt="Logo Koperasi" className="w-8 h-8 rounded-lg object-contain bg-white" />
+              <img src={logoAsset.url} alt="Logo Koperasi SMP Negeri 36 Samarinda" className="w-8 h-8 rounded-lg object-contain bg-white" />
               <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-semibold">Koperasi SMPN 36</span>
+                <span className="text-sm font-semibold">Koperasi SMP Negeri 36 Samarinda</span>
                 <span className="text-xs text-muted-foreground">Simpan Pinjam</span>
               </div>
             </div>
@@ -89,10 +93,26 @@ function AppLayout() {
               <div className="text-xs font-medium truncate">{user?.nama}</div>
               <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{user?.role === "super" ? "Super Admin" : "Admin"}</div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="justify-start">
-              <LogOut className="w-4 h-4" />
-              <span className="group-data-[collapsible=icon]:hidden">Keluar</span>
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="justify-start">
+                  <LogOut className="w-4 h-4" />
+                  <span className="group-data-[collapsible=icon]:hidden">Keluar</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Keluar dari aplikasi?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Anda akan diarahkan ke halaman login. Pastikan semua data telah tersimpan.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSignOut}>Ya, Keluar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </SidebarFooter>
         </Sidebar>
         <div className="flex-1 flex flex-col min-w-0">

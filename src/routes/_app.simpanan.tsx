@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouteContext } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listSimpanan, createSimpanan, updateSimpanan, deleteSimpanan, listAnggota } from "@/lib/koperasi.functions";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DeleteConfirm } from "@/components/delete-confirm";
 import { useEffect, useState } from "react";
 import { Plus, Trash2, ArrowDownCircle, ArrowUpCircle, Pencil, Printer } from "lucide-react";
 import { formatTanggal, rupiah } from "@/lib/format";
@@ -21,7 +21,7 @@ import { printHtml } from "@/lib/print";
 import { renderStrukSimpanan } from "@/lib/dokumen";
 
 export const Route = createFileRoute("/_app/simpanan")({
-  head: () => ({ meta: [{ title: "Simpanan — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Simpanan — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: SimpananPage,
 });
 
@@ -49,6 +49,10 @@ function emptyForm(anggotaId = ""): FormState {
 }
 
 function SimpananPage() {
+  const { user } = useRouteContext({ from: "/_app" });
+  const operator = user?.nama ?? "Petugas";
+  const isSuper = user?.role === "super";
+
   const qc = useQueryClient();
   const listFn = useServerFn(listSimpanan);
   const anggotaFn = useServerFn(listAnggota);
@@ -62,7 +66,6 @@ function SimpananPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(() => emptyForm());
 
-  // On mount, prefill anggota from localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
     const last = window.localStorage.getItem(LAST_ANGGOTA_KEY) ?? "";
@@ -88,6 +91,13 @@ function SimpananPage() {
     setOpen(true);
   }
 
+  /** Saldo anggota berdasarkan data list saat ini (untuk cetak ulang). */
+  function saldoForAnggota(anggotaId: string): number {
+    return (simpanan as any[])
+      .filter((s) => s.anggota_id === anggotaId)
+      .reduce((n, s) => n + (s.tipe === "setor" ? Number(s.jumlah) : -Number(s.jumlah)), 0);
+  }
+
   const createM = useMutation({
     mutationFn: (d: any) => createFn({ data: d }),
     onSuccess: (res: any, vars: any) => {
@@ -96,7 +106,6 @@ function SimpananPage() {
       if (typeof window !== "undefined") window.localStorage.setItem(LAST_ANGGOTA_KEY, vars.anggota_id);
       setOpen(false);
       toast.success("Transaksi simpanan dicatat");
-      // Print struk with returned row
       const row = res?.row ?? vars;
       const anggotaObj = (anggota as any[]).find((a) => a.id === vars.anggota_id);
       printHtml(renderStrukSimpanan({
@@ -108,6 +117,8 @@ function SimpananPage() {
         jumlah: Number(row.jumlah ?? vars.jumlah),
         catatan: row.catatan ?? vars.catatan ?? null,
         nomor: row.id ?? "",
+        operator,
+        saldo: typeof res?.saldo === "number" ? res.saldo : undefined,
       }));
     },
     onError: (e: Error) => toast.error(e.message),
@@ -125,12 +136,13 @@ function SimpananPage() {
   });
 
   const delM = useMutation({
-    mutationFn: (id: string) => delFn({ data: { id } }),
+    mutationFn: (d: { id: string; superPassword?: string }) => delFn({ data: d }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["simpanan"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Transaksi dihapus");
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   function submit(e: React.FormEvent) {
@@ -160,6 +172,8 @@ function SimpananPage() {
       jumlah: Number(s.jumlah),
       catatan: s.catatan,
       nomor: s.id,
+      operator,
+      saldo: s.tipe === "setor" ? saldoForAnggota(s.anggota_id) : undefined,
     }));
   }
 
@@ -256,13 +270,13 @@ function SimpananPage() {
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => cetakStruk(s)} title="Cetak struk"><Printer className="w-4 h-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => openEdit(s)} title="Edit"><Pencil className="w-4 h-4" /></Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader><AlertDialogTitle>Hapus transaksi?</AlertDialogTitle><AlertDialogDescription>Tindakan ini tidak dapat dibatalkan.</AlertDialogDescription></AlertDialogHeader>
-                          <AlertDialogFooter><AlertDialogCancel>Batal</AlertDialogCancel><AlertDialogAction onClick={() => delM.mutate(s.id)}>Hapus</AlertDialogAction></AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <DeleteConfirm
+                        isSuper={isSuper}
+                        title="Hapus transaksi?"
+                        description="Tindakan ini tidak dapat dibatalkan."
+                        onConfirm={(pw) => delM.mutateAsync({ id: s.id, superPassword: pw })}
+                        trigger={<Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button>}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>

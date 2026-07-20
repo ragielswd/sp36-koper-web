@@ -15,17 +15,15 @@ import {
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { DeleteConfirm } from "@/components/delete-confirm";
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { formatTanggal } from "@/lib/format";
 import { toast } from "sonner";
+import { useRouteContext } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app/anggota")({
-  head: () => ({ meta: [{ title: "Anggota — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Anggota — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: AnggotaPage,
 });
 
@@ -41,6 +39,8 @@ type Anggota = {
 };
 
 function AnggotaPage() {
+  const { user } = useRouteContext({ from: "/_app" });
+  const isSuper = user?.role === "super";
   const qc = useQueryClient();
   const listFn = useServerFn(listAnggota);
   const upsertFn = useServerFn(upsertAnggota);
@@ -64,7 +64,7 @@ function AnggotaPage() {
   });
 
   const delM = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    mutationFn: (d: { id: string; superPassword?: string }) => deleteFn({ data: d }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["anggota"] });
       toast.success("Anggota dihapus");
@@ -163,23 +163,13 @@ function AnggotaPage() {
                   <TableCell>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(a)}><Pencil className="w-4 h-4" /></Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Hapus anggota?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Semua data simpanan dan pinjaman terkait <b>{a.nama}</b> akan ikut terhapus.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Batal</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => delM.mutate(a.id)}>Hapus</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <DeleteConfirm
+                        isSuper={isSuper}
+                        title="Hapus anggota?"
+                        description={<>Semua data simpanan dan pinjaman terkait <b>{a.nama}</b> akan ikut terhapus.</>}
+                        onConfirm={(pw) => delM.mutateAsync({ id: a.id, superPassword: pw })}
+                        trigger={<Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button>}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
