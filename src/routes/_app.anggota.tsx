@@ -39,6 +39,8 @@ type Anggota = {
 };
 
 function AnggotaPage() {
+  const { user } = useRouteContext({ from: "/_app" });
+  const isSuper = user?.role === "super";
   const qc = useQueryClient();
   const listFn = useServerFn(listAnggota);
   const upsertFn = useServerFn(upsertAnggota);
@@ -62,7 +64,7 @@ function AnggotaPage() {
   });
 
   const delM = useMutation({
-    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    mutationFn: (d: { id: string; superPassword?: string }) => deleteFn({ data: d }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["anggota"] });
       toast.success("Anggota dihapus");
