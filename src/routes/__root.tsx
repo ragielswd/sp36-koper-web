@@ -120,15 +120,16 @@ function RootComponent() {
       {/* Global watermark rendered above all layers, non-interactive */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-[9999] flex items-center justify-center print:opacity-10"
+        className="pointer-events-none fixed inset-0 print:opacity-10"
         style={{
+          zIndex: 0,
           backgroundImage:
             "url('/__l5e/assets-v1/d08fca21-d244-4be3-8f51-91cec4f9defe/logo-koperasi.png')",
           backgroundRepeat: "no-repeat",
-          backgroundPosition: "center",
+          backgroundPosition: "center center",
           backgroundSize: "min(60vmin, 520px)",
-          opacity: 0.05,
-          mixBlendMode: "multiply",
+          backgroundAttachment: "fixed",
+          opacity: 0.06,
         }}
       />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
