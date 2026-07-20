@@ -163,23 +163,13 @@ function AnggotaPage() {
                   <TableCell>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(a)}><Pencil className="w-4 h-4" /></Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Hapus anggota?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Semua data simpanan dan pinjaman terkait <b>{a.nama}</b> akan ikut terhapus.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Batal</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => delM.mutate(a.id)}>Hapus</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <DeleteConfirm
+                        isSuper={isSuper}
+                        title="Hapus anggota?"
+                        description={<>Semua data simpanan dan pinjaman terkait <b>{a.nama}</b> akan ikut terhapus.</>}
+                        onConfirm={(pw) => delM.mutateAsync({ id: a.id, superPassword: pw })}
+                        trigger={<Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button>}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
