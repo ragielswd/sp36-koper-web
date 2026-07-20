@@ -30,7 +30,7 @@ export function DeleteConfirm({
   title?: string;
   description?: React.ReactNode;
   isSuper: boolean;
-  onConfirm: (superPassword?: string) => Promise<void> | void;
+  onConfirm: (superPassword?: string) => Promise<unknown> | unknown;
   confirmLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
