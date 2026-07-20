@@ -15,14 +15,12 @@ import {
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { DeleteConfirm } from "@/components/delete-confirm";
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { formatTanggal } from "@/lib/format";
 import { toast } from "sonner";
+import { useRouteContext } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app/anggota")({
   head: () => ({ meta: [{ title: "Anggota — Koperasi SMP Negeri 36 Samarinda" }] }),
