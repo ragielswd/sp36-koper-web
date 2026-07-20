@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, useRouteContext } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getPinjamanDetail, createAngsuran, deleteAngsuran } from "@/lib/koperasi.functions";
@@ -9,14 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DeleteConfirm } from "@/components/delete-confirm";
 import { useState } from "react";
 import { ArrowLeft, Plus, Trash2, Printer, CheckCircle2, Circle, ChevronRight } from "lucide-react";
 import { formatTanggal, rupiah, hitungAngsuranBulanan } from "@/lib/format";
 import { toast } from "sonner";
-import logoAsset from "@/assets/logo-koperasi.png.asset.json";
 import { MoneyInput } from "@/components/money-input";
 import { printHtml } from "@/lib/print";
+import { renderKuitansiAngsuran } from "@/lib/dokumen";
 
 export const Route = createFileRoute("/_app/pinjaman_/$id")({
   head: () => ({ meta: [{ title: "Detail Pinjaman — Koperasi SMP Negeri 36 Samarinda" }] }),
@@ -32,76 +32,13 @@ type Angsuran = {
   catatan?: string | null;
 };
 
-function cetakKuitansi(opts: {
-  no: number;
-  totalTenor: number;
-  namaAnggota: string;
-  nip?: string | null;
-  pokok: number;
-  bunga: number;
-  denda: number;
-  tanggal: string;
-  catatan?: string | null;
-  sisaSetelah: number;
-  status: "Lunas" | "Belum";
-}) {
-  const total = opts.pokok + opts.bunga + opts.denda;
-  const html = `<!doctype html>
-<html><head><meta charset="utf-8"><title>Kuitansi Angsuran ${opts.no}</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 24px; color:#111827; }
-  .wrap { max-width: 620px; margin: 0 auto; border: 1px solid #d1d5db; padding: 24px; position:relative; overflow:hidden; }
-  .wrap::before { content:""; position:absolute; inset:0; background: url('${logoAsset.url}') center/60% no-repeat; opacity:.06; pointer-events:none; }
-  header { display:flex; align-items:center; gap:12px; border-bottom:2px solid #111827; padding-bottom:12px; margin-bottom:16px; }
-  header img { width:56px; height:56px; object-fit:contain; }
-  h1 { font-size: 16px; margin:0; }
-  .sub { font-size: 12px; color:#4b5563; }
-  .title { text-align:center; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin:12px 0; font-size:14px; }
-  table { width:100%; font-size:13px; border-collapse:collapse; }
-  td { padding: 4px 6px; vertical-align: top; }
-  td.k { color:#4b5563; width: 38%; }
-  .total { border-top:1px dashed #9ca3af; margin-top:10px; padding-top:8px; display:flex; justify-content:space-between; font-weight:700; font-size:15px; }
-  .sign { display:flex; justify-content:space-between; margin-top:40px; font-size:12px; }
-  .sign div { text-align:center; width:200px; }
-  .line { border-top:1px solid #111827; margin-top:56px; padding-top:4px; }
-  .badge { display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight:600; }
-  .badge.lunas { background:#dcfce7; color:#166534; }
-  .badge.belum { background:#fef3c7; color:#92400e; }
-  @media print { body { margin: 0 } .wrap { border: none } }
-</style></head><body>
-<div class="wrap">
-  <header>
-    <img src="${logoAsset.url}" alt=""/>
-    <div>
-      <h1>Koperasi Simpan Pinjam SMP Negeri 36 Samarinda</h1>
-      <div class="sub">Kuitansi Pembayaran Angsuran</div>
-    </div>
-  </header>
-  <div class="title">Kuitansi Angsuran ke ${opts.no} dari ${opts.totalTenor}</div>
-  <table>
-    <tr><td class="k">Telah diterima dari</td><td>: <b>${opts.namaAnggota}</b>${opts.nip ? " (NIP " + opts.nip + ")" : ""}</td></tr>
-    <tr><td class="k">Tanggal pembayaran</td><td>: ${formatTanggal(opts.tanggal)}</td></tr>
-    <tr><td class="k">Angsuran ke</td><td>: ${opts.no} dari ${opts.totalTenor}</td></tr>
-    <tr><td class="k">Status</td><td>: <span class="badge ${opts.status === "Lunas" ? "lunas" : "belum"}">${opts.status}</span></td></tr>
-    <tr><td class="k">Pokok</td><td>: ${rupiah(opts.pokok)}</td></tr>
-    <tr><td class="k">Bunga / Jasa</td><td>: ${rupiah(opts.bunga)}</td></tr>
-    <tr><td class="k">Sisa pinjaman setelah bayar</td><td>: ${rupiah(opts.sisaSetelah)}</td></tr>
-    ${opts.catatan ? `<tr><td class="k">Catatan</td><td>: ${opts.catatan}</td></tr>` : ""}
-  </table>
-  <div class="total"><span>Total Pembayaran</span><span>${rupiah(total)}</span></div>
-  <div class="sign">
-    <div><div class="line">Anggota</div></div>
-    <div><div class="line">Bendahara Koperasi</div></div>
-  </div>
-</div>
-</body></html>`;
-  printHtml(html);
-}
-
 function PinjamanDetailPage() {
   const { id } = Route.useParams();
   const router = useRouter();
+  const { user } = useRouteContext({ from: "/_app" });
+  const operator = user?.nama ?? "Petugas";
+  const isSuper = user?.role === "super";
+
   const qc = useQueryClient();
   const detailFn = useServerFn(getPinjamanDetail);
   const createFn = useServerFn(createAngsuran);
@@ -120,7 +57,6 @@ function PinjamanDetailPage() {
   const preview = hitungAngsuranBulanan(Number(p.pokok), Number(p.bunga_persen), Number(p.tenor_bulan), p.bunga_tipe);
   const tenor = Number(p.tenor_bulan);
 
-  // Build tenor schedule with running remaining balance
   let running = Number(p.pokok);
   const jadwal = Array.from({ length: tenor }, (_, i) => {
     const bayar = angsuran[i];
@@ -158,11 +94,13 @@ function PinjamanDetailPage() {
   });
 
   const delM = useMutation({
-    mutationFn: (aid: string) => delFn({ data: { id: aid } }),
+    mutationFn: (d: { id: string; superPassword?: string }) => delFn({ data: d }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pinjaman", id] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success("Angsuran dihapus");
     },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   function submit(e: React.FormEvent) {
@@ -180,14 +118,12 @@ function PinjamanDetailPage() {
   const sisaSaatCatat = Math.max(0, sisa - (Number(form.pokok) || 0));
 
   function goBack() {
-    // Prefer browser back so any prior filter/search state on the list is preserved.
     if (typeof window !== "undefined" && window.history.length > 1) router.history.back();
     else router.navigate({ to: "/pinjaman" });
   }
 
   return (
     <div className="space-y-4">
-      {/* Breadcrumb */}
       <nav className="flex items-center gap-1 text-sm text-muted-foreground" aria-label="Breadcrumb">
         <Link to="/dashboard" className="hover:text-foreground">Dashboard</Link>
         <ChevronRight className="w-3.5 h-3.5" />
@@ -227,7 +163,7 @@ function PinjamanDetailPage() {
             <p className="text-xs text-muted-foreground mt-0.5">Klik "Kuitansi" untuk mencetak kuitansi sesuai tenor & status pembayarannya.</p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4" />Catat Angsuran</Button></DialogTrigger>
+            <DialogTrigger asChild><Button size="sm" disabled={sisa <= 0}><Plus className="w-4 h-4" />Catat Angsuran</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Catat Angsuran</DialogTitle></DialogHeader>
               <form onSubmit={submit} className="space-y-3">
@@ -297,7 +233,7 @@ function PinjamanDetailPage() {
                           size="sm"
                           variant="outline"
                           onClick={() =>
-                            cetakKuitansi({
+                            printHtml(renderKuitansiAngsuran({
                               no: row.no,
                               totalTenor: tenor,
                               namaAnggota: p.anggota?.nama ?? "-",
@@ -309,19 +245,20 @@ function PinjamanDetailPage() {
                               catatan: paid ? row.bayar!.catatan : "Kuitansi tenor belum dibayar (rencana).",
                               sisaSetelah: row.sisaSetelah,
                               status: paid ? "Lunas" : "Belum",
-                            })
+                              operator,
+                            }))
                           }
                         >
                           <Printer className="w-3.5 h-3.5" />Kuitansi
                         </Button>
                         {paid && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild><Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button></AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader><AlertDialogTitle>Hapus angsuran ini?</AlertDialogTitle></AlertDialogHeader>
-                              <AlertDialogFooter><AlertDialogCancel>Batal</AlertDialogCancel><AlertDialogAction onClick={() => delM.mutate(row.bayar!.id)}>Hapus</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <DeleteConfirm
+                            isSuper={isSuper}
+                            title="Hapus angsuran ini?"
+                            description="Sisa pinjaman akan disesuaikan otomatis."
+                            onConfirm={(pw) => delM.mutateAsync({ id: row.bayar!.id, superPassword: pw })}
+                            trigger={<Button size="icon" variant="ghost"><Trash2 className="w-4 h-4 text-destructive" /></Button>}
+                          />
                         )}
                       </div>
                     </TableCell>
