@@ -9,6 +9,28 @@ async function admin() {
   return supabaseAdmin;
 }
 
+async function computeSaldoAnggota(sb: any, anggotaId: string): Promise<number> {
+  const { data } = await sb.from("simpanan").select("tipe,jumlah").eq("anggota_id", anggotaId);
+  return (data ?? []).reduce(
+    (n: number, r: any) => n + (r.tipe === "setor" ? Number(r.jumlah) : -Number(r.jumlah)),
+    0,
+  );
+}
+
+async function syncPinjamanStatus(sb: any, pinjamanId: string) {
+  const { data: pin } = await sb.from("pinjaman").select("pokok,status").eq("id", pinjamanId).maybeSingle();
+  if (!pin) return;
+  const { data: angs } = await sb.from("angsuran").select("pokok").eq("pinjaman_id", pinjamanId);
+  const totalPokok = (angs ?? []).reduce((n: number, a: any) => n + Number(a.pokok), 0);
+  const sisa = Number(pin.pokok) - totalPokok;
+  if (sisa <= 0 && pin.status !== "lunas") {
+    await sb.from("pinjaman").update({ status: "lunas", updated_at: new Date().toISOString() }).eq("id", pinjamanId);
+  } else if (sisa > 0 && pin.status === "lunas") {
+    // if angsuran deleted and no longer paid off, revert
+    await sb.from("pinjaman").update({ status: "aktif", updated_at: new Date().toISOString() }).eq("id", pinjamanId);
+  }
+}
+
 // ---------- ANGGOTA ----------
 export const listAnggota = createServerFn({ method: "GET" }).handler(async () => {
   await (await import("./gate.server")).requireAdmin();
@@ -43,10 +65,18 @@ export const upsertAnggota = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const deleteAnggota = createServerFn({ method: "POST" })
+export const getSaldoAnggota = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
     await (await import("./gate.server")).requireAdmin();
+    const sb = await admin();
+    return { saldo: await computeSaldoAnggota(sb, data.id) };
+  });
+
+export const deleteAnggota = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string; superPassword?: string }) => d)
+  .handler(async ({ data }) => {
+    await (await import("./gate.server")).requireSuperOrPassword(data.superPassword);
     const sb = await admin();
     const { error } = await sb.from("anggota").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -77,9 +107,14 @@ export const createSimpanan = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await (await import("./gate.server")).requireAdmin();
     const sb = await admin();
-    const { data: inserted, error } = await sb.from("simpanan").insert(data).select("*, anggota:anggota_id(id,nama,nip)").single();
+    const { data: inserted, error } = await sb
+      .from("simpanan")
+      .insert(data)
+      .select("*, anggota:anggota_id(id,nama,nip)")
+      .single();
     if (error) throw new Error(error.message);
-    return { ok: true, row: inserted };
+    const saldo = await computeSaldoAnggota(sb, data.anggota_id);
+    return { ok: true, row: inserted, saldo };
   });
 
 export const updateSimpanan = createServerFn({ method: "POST" })
@@ -102,9 +137,9 @@ export const updateSimpanan = createServerFn({ method: "POST" })
   });
 
 export const deleteSimpanan = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .inputValidator((d: { id: string; superPassword?: string }) => d)
   .handler(async ({ data }) => {
-    await (await import("./gate.server")).requireAdmin();
+    await (await import("./gate.server")).requireSuperOrPassword(data.superPassword);
     const sb = await admin();
     const { error } = await sb.from("simpanan").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -202,9 +237,9 @@ export const updatePinjamanStatus = createServerFn({ method: "POST" })
   });
 
 export const deletePinjaman = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .inputValidator((d: { id: string; superPassword?: string }) => d)
   .handler(async ({ data }) => {
-    await (await import("./gate.server")).requireAdmin();
+    await (await import("./gate.server")).requireSuperOrPassword(data.superPassword);
     const sb = await admin();
     const { error } = await sb.from("pinjaman").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -226,16 +261,19 @@ export const createAngsuran = createServerFn({ method: "POST" })
     const sb = await admin();
     const { error } = await sb.from("angsuran").insert({ ...data, denda: data.denda ?? 0 });
     if (error) throw new Error(error.message);
+    await syncPinjamanStatus(sb, data.pinjaman_id);
     return { ok: true };
   });
 
 export const deleteAngsuran = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .inputValidator((d: { id: string; superPassword?: string }) => d)
   .handler(async ({ data }) => {
-    await (await import("./gate.server")).requireAdmin();
+    await (await import("./gate.server")).requireSuperOrPassword(data.superPassword);
     const sb = await admin();
+    const { data: row } = await sb.from("angsuran").select("pinjaman_id").eq("id", data.id).maybeSingle();
     const { error } = await sb.from("angsuran").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    if (row?.pinjaman_id) await syncPinjamanStatus(sb, row.pinjaman_id);
     return { ok: true };
   });
 
@@ -267,7 +305,6 @@ export const dashboardRingkasan = createServerFn({ method: "GET" }).handler(asyn
   const totalBunga = angsuran?.reduce((s: number, a: any) => s + Number(a.bunga), 0) ?? 0;
   const sisaPokokPinjaman = totalPinjamanPokok - totalAngsuranPokok;
 
-  // 6-month trend
   const now = new Date();
   const bulanTrend: { label: string; simpanan: number; angsuran: number }[] = [];
   for (let i = 5; i >= 0; i--) {
@@ -293,3 +330,48 @@ export const dashboardRingkasan = createServerFn({ method: "GET" }).handler(asyn
     bulanTrend,
   };
 });
+
+// ---------- DATABASE MANAGEMENT (super only) ----------
+export const databaseStats = createServerFn({ method: "GET" }).handler(async () => {
+  await (await import("./gate.server")).requireSuper();
+  const sb = await admin();
+  const tables = ["anggota", "simpanan", "pinjaman", "angsuran", "admin_users"] as const;
+  const results: Array<{ table: string; count: number }> = [];
+  for (const t of tables) {
+    const { count } = await sb.from(t).select("id", { count: "exact", head: true });
+    results.push({ table: t, count: count ?? 0 });
+  }
+  return results;
+});
+
+export const truncateTable = createServerFn({ method: "POST" })
+  .inputValidator((d: { table: "anggota" | "simpanan" | "pinjaman" | "angsuran"; superPassword: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireSuper, verifySuperPassword } = await import("./gate.server");
+    await requireSuper();
+    const ok = await verifySuperPassword(data.superPassword);
+    if (!ok) throw new Error("Password super admin salah.");
+    const allowed = new Set(["anggota", "simpanan", "pinjaman", "angsuran"]);
+    if (!allowed.has(data.table)) throw new Error("Tabel tidak diizinkan");
+    const sb = await admin();
+    // Delete all rows (id is not null)
+    const { error } = await sb.from(data.table).delete().not("id", "is", null);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const resetAllData = createServerFn({ method: "POST" })
+  .inputValidator((d: { superPassword: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireSuper, verifySuperPassword } = await import("./gate.server");
+    await requireSuper();
+    const ok = await verifySuperPassword(data.superPassword);
+    if (!ok) throw new Error("Password super admin salah.");
+    const sb = await admin();
+    // order matters (children first)
+    for (const t of ["angsuran", "pinjaman", "simpanan", "anggota"] as const) {
+      const { error } = await sb.from(t).delete().not("id", "is", null);
+      if (error) throw new Error(`${t}: ${error.message}`);
+    }
+    return { ok: true };
+  });
