@@ -58,7 +58,7 @@ function AppLayout() {
             <div className="flex items-center gap-2 px-2 py-2">
               <img src={logoAsset.url} alt="Logo Koperasi" className="w-8 h-8 rounded-lg object-contain bg-white" />
               <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-semibold">Koperasi SMPN 36</span>
+                <span className="text-sm font-semibold">Koperasi SMP Negeri 36 Samarinda</span>
                 <span className="text-xs text-muted-foreground">Simpan Pinjam</span>
               </div>
             </div>

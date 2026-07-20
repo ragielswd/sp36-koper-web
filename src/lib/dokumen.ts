@@ -51,7 +51,7 @@ function kopHeader(subtitle: string) {
 <header>
   <img src="${LOGO_URL}" alt=""/>
   <div>
-    <h1>Koperasi Simpan Pinjam SMP Negeri 36</h1>
+    <h1>Koperasi Simpan Pinjam SMP Negeri 36 Samarinda</h1>
     <div class="sub">${subtitle}</div>
   </div>
 </header>`;
@@ -116,7 +116,7 @@ export function renderSuratPerjanjian(opts: {
   <div class="title">Surat Perjanjian Pinjaman Tanpa Agunan</div>
   <p>No. ${String(opts.nomor).slice(0, 8).toUpperCase()}</p>
   <p>Pada hari ini, ${formatTanggal(opts.tanggalPinjam)}, telah dibuat perjanjian pinjaman tanpa agunan antara:</p>
-  <p><b>PIHAK PERTAMA</b> — Pengurus Koperasi Simpan Pinjam SMP Negeri 36, selanjutnya disebut <b>Koperasi</b>.</p>
+  <p><b>PIHAK PERTAMA</b> — Pengurus Koperasi Simpan Pinjam SMP Negeri 36 Samarinda, selanjutnya disebut <b>Koperasi</b>.</p>
   <p><b>PIHAK KEDUA</b> — <b>${opts.namaAnggota}</b>${opts.nip ? `, NIP ${opts.nip}` : ""}${opts.jabatan ? `, ${opts.jabatan}` : ""}, selanjutnya disebut <b>Peminjam</b>.</p>
   <p>Kedua belah pihak sepakat untuk mengikatkan diri dalam perjanjian ini dengan ketentuan sebagai berikut:</p>
   <ol>

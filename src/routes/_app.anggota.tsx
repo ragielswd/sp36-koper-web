@@ -25,7 +25,7 @@ import { formatTanggal } from "@/lib/format";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/anggota")({
-  head: () => ({ meta: [{ title: "Anggota — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Anggota — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: AnggotaPage,
 });
 

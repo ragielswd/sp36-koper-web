@@ -19,7 +19,7 @@ import { MoneyInput } from "@/components/money-input";
 import { printHtml } from "@/lib/print";
 
 export const Route = createFileRoute("/_app/pinjaman_/$id")({
-  head: () => ({ meta: [{ title: "Detail Pinjaman — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Detail Pinjaman — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: PinjamanDetailPage,
 });
 
@@ -74,7 +74,7 @@ function cetakKuitansi(opts: {
   <header>
     <img src="${logoAsset.url}" alt=""/>
     <div>
-      <h1>Koperasi Simpan Pinjam SMP Negeri 36</h1>
+      <h1>Koperasi Simpan Pinjam SMP Negeri 36 Samarinda</h1>
       <div class="sub">Kuitansi Pembayaran Angsuran</div>
     </div>
   </header>

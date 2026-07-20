@@ -21,7 +21,7 @@ import { printHtml } from "@/lib/print";
 import { renderStrukSimpanan } from "@/lib/dokumen";
 
 export const Route = createFileRoute("/_app/simpanan")({
-  head: () => ({ meta: [{ title: "Simpanan — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Simpanan — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: SimpananPage,
 });
 

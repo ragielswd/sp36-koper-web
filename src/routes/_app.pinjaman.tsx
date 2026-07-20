@@ -21,7 +21,7 @@ import { printHtml } from "@/lib/print";
 import { renderSuratPerjanjian } from "@/lib/dokumen";
 
 export const Route = createFileRoute("/_app/pinjaman")({
-  head: () => ({ meta: [{ title: "Pinjaman — Koperasi SMPN 36" }] }),
+  head: () => ({ meta: [{ title: "Pinjaman — Koperasi SMP Negeri 36 Samarinda" }] }),
   component: PinjamanPage,
 });
 
