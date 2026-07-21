@@ -176,6 +176,27 @@ function DatabasePage() {
       </div>
 
       <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Download className="w-4 h-4" />Backup Database
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Unduh salinan seluruh data koperasi (anggota, simpanan, pinjaman, angsuran, dan akun admin tanpa password) untuk arsip atau pemulihan manual.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={downloadBackupJSON} disabled={backupBusy}>
+              <FileJson className="w-4 h-4" />Backup JSON
+            </Button>
+            <Button variant="outline" onClick={downloadBackupXLSX} disabled={backupBusy}>
+              <FileSpreadsheet className="w-4 h-4" />Backup Excel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader className="py-3"><CardTitle className="text-base">Ringkasan Tabel</CardTitle></CardHeader>
         <CardContent className="p-0">
           <Table>
