@@ -105,11 +105,11 @@ export const createSimpanan = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await (await import("./gate.server")).requireAdmin();
+    const s = await (await import("./gate.server")).requireAdmin();
     const sb = await admin();
     const { data: inserted, error } = await sb
       .from("simpanan")
-      .insert(data)
+      .insert({ ...data, dibuat_oleh: s.data.nama ?? s.data.username ?? null })
       .select("*, anggota:anggota_id(id,nama,nip)")
       .single();
     if (error) throw new Error(error.message);
