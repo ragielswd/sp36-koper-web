@@ -92,6 +92,7 @@ export type Database = {
           catatan: string | null
           created_at: string
           denda: number
+          dibuat_oleh: string | null
           id: string
           pinjaman_id: string
           pokok: number
@@ -102,6 +103,7 @@ export type Database = {
           catatan?: string | null
           created_at?: string
           denda?: number
+          dibuat_oleh?: string | null
           id?: string
           pinjaman_id: string
           pokok?: number
@@ -112,6 +114,7 @@ export type Database = {
           catatan?: string | null
           created_at?: string
           denda?: number
+          dibuat_oleh?: string | null
           id?: string
           pinjaman_id?: string
           pokok?: number
@@ -134,6 +137,7 @@ export type Database = {
           bunga_tipe: string
           catatan: string | null
           created_at: string
+          dibuat_oleh: string | null
           id: string
           pokok: number
           status: string
@@ -148,6 +152,7 @@ export type Database = {
           bunga_tipe?: string
           catatan?: string | null
           created_at?: string
+          dibuat_oleh?: string | null
           id?: string
           pokok: number
           status?: string
@@ -162,6 +167,7 @@ export type Database = {
           bunga_tipe?: string
           catatan?: string | null
           created_at?: string
+          dibuat_oleh?: string | null
           id?: string
           pokok?: number
           status?: string
@@ -185,6 +191,7 @@ export type Database = {
           anggota_id: string
           catatan: string | null
           created_at: string
+          dibuat_oleh: string | null
           id: string
           jenis: string
           jumlah: number
@@ -195,6 +202,7 @@ export type Database = {
           anggota_id: string
           catatan?: string | null
           created_at?: string
+          dibuat_oleh?: string | null
           id?: string
           jenis: string
           jumlah: number
@@ -205,6 +213,7 @@ export type Database = {
           anggota_id?: string
           catatan?: string | null
           created_at?: string
+          dibuat_oleh?: string | null
           id?: string
           jenis?: string
           jumlah?: number
