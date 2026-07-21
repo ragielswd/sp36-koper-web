@@ -257,9 +257,9 @@ export const createAngsuran = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await (await import("./gate.server")).requireAdmin();
+    const s = await (await import("./gate.server")).requireAdmin();
     const sb = await admin();
-    const { error } = await sb.from("angsuran").insert({ ...data, denda: data.denda ?? 0 });
+    const { error } = await sb.from("angsuran").insert({ ...data, denda: data.denda ?? 0, dibuat_oleh: s.data.nama ?? s.data.username ?? null });
     if (error) throw new Error(error.message);
     await syncPinjamanStatus(sb, data.pinjaman_id);
     return { ok: true };
