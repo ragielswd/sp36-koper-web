@@ -124,7 +124,7 @@ function PinjamanPage() {
         tglJatuhTempo: vars.tgl_jatuh_tempo,
         angsuranBulanan: est.total,
         nomor: row.id ?? "",
-        operator,
+        operator: row.dibuat_oleh ?? operator,
       }));
     },
     onError: (e: Error) => toast.error(e.message),
@@ -170,7 +170,7 @@ function PinjamanPage() {
       tglJatuhTempo: p.tgl_jatuh_tempo,
       angsuranBulanan: est.total,
       nomor: p.id,
-      operator,
+      operator: p.dibuat_oleh ?? operator,
     }));
   }
 

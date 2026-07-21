@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import logoAsset from "@/assets/logo-koperasi.png.asset.json";
+import { HeaderClock } from "@/components/header-clock";
 
 export const Route = createFileRoute("/unlock")({
   head: () => ({ meta: [{ title: "Masuk — Koperasi SMP Negeri 36 Samarinda" }] }),
@@ -36,7 +37,11 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <div className="min-h-screen flex flex-col bg-muted/30">
+      <header className="h-12 flex items-center px-4 border-b bg-background/60 backdrop-blur">
+        <HeaderClock />
+      </header>
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-3">
           <div className="mx-auto w-20 h-20 rounded-2xl bg-white shadow-sm border flex items-center justify-center overflow-hidden">
@@ -81,6 +86,7 @@ function LoginPage() {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

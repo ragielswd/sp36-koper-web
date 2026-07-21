@@ -105,11 +105,11 @@ export const createSimpanan = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await (await import("./gate.server")).requireAdmin();
+    const s = await (await import("./gate.server")).requireAdmin();
     const sb = await admin();
     const { data: inserted, error } = await sb
       .from("simpanan")
-      .insert(data)
+      .insert({ ...data, dibuat_oleh: s.data.nama ?? s.data.username ?? null })
       .select("*, anggota:anggota_id(id,nama,nip)")
       .single();
     if (error) throw new Error(error.message);
@@ -190,10 +190,10 @@ export const createPinjaman = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await (await import("./gate.server")).requireAdmin();
+    const s = await (await import("./gate.server")).requireAdmin();
     const sb = await admin();
     const { data: inserted, error } = await (sb.from("pinjaman") as any)
-      .insert(data)
+      .insert({ ...data, dibuat_oleh: s.data.nama ?? s.data.username ?? null })
       .select("*, anggota:anggota_id(id,nama,nip,jabatan)")
       .single();
     if (error) throw new Error(error.message);
@@ -257,9 +257,9 @@ export const createAngsuran = createServerFn({ method: "POST" })
     catatan?: string | null;
   }) => d)
   .handler(async ({ data }) => {
-    await (await import("./gate.server")).requireAdmin();
+    const s = await (await import("./gate.server")).requireAdmin();
     const sb = await admin();
-    const { error } = await sb.from("angsuran").insert({ ...data, denda: data.denda ?? 0 });
+    const { error } = await sb.from("angsuran").insert({ ...data, denda: data.denda ?? 0, dibuat_oleh: s.data.nama ?? s.data.username ?? null });
     if (error) throw new Error(error.message);
     await syncPinjamanStatus(sb, data.pinjaman_id);
     return { ok: true };

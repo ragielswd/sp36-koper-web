@@ -117,7 +117,7 @@ function SimpananPage() {
         jumlah: Number(row.jumlah ?? vars.jumlah),
         catatan: row.catatan ?? vars.catatan ?? null,
         nomor: row.id ?? "",
-        operator,
+        operator: row.dibuat_oleh ?? operator,
         saldo: typeof res?.saldo === "number" ? res.saldo : undefined,
       }));
     },
@@ -172,7 +172,7 @@ function SimpananPage() {
       jumlah: Number(s.jumlah),
       catatan: s.catatan,
       nomor: s.id,
-      operator,
+      operator: s.dibuat_oleh ?? operator,
       saldo: s.tipe === "setor" ? saldoForAnggota(s.anggota_id) : undefined,
     }));
   }

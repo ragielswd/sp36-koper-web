@@ -245,7 +245,7 @@ function PinjamanDetailPage() {
                               catatan: paid ? row.bayar!.catatan : "Kuitansi tenor belum dibayar (rencana).",
                               sisaSetelah: row.sisaSetelah,
                               status: paid ? "Lunas" : "Belum",
-                              operator,
+                              operator: (paid ? (row.bayar as any).dibuat_oleh : p.dibuat_oleh) ?? operator,
                             }))
                           }
                         >
