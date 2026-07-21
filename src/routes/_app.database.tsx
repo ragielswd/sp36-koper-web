@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { databaseStats, truncateTable, resetAllData } from "@/lib/koperasi.functions";
+import { databaseStats, truncateTable, resetAllData, backupDatabase } from "@/lib/koperasi.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Database, ShieldAlert, Trash2 } from "lucide-react";
+import { Database, Download, FileJson, FileSpreadsheet, ShieldAlert, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/_app/database")({
   head: () => ({ meta: [{ title: "Kelola Database — Koperasi SMP Negeri 36 Samarinda" }] }),
@@ -85,7 +86,64 @@ function DatabasePage() {
   const qc = useQueryClient();
   const statsFn = useServerFn(databaseStats);
   const resetFn = useServerFn(resetAllData);
+  const backupFn = useServerFn(backupDatabase);
   const { data } = useSuspenseQuery({ queryKey: ["database-stats"], queryFn: () => statsFn() });
+  const [backupBusy, setBackupBusy] = useState(false);
+
+  const stamp = () => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+  };
+
+  async function downloadBackupJSON() {
+    setBackupBusy(true);
+    try {
+      const dump = await backupFn();
+      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `backup-koperasi-${stamp()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Backup JSON diunduh");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
+  async function downloadBackupXLSX() {
+    setBackupBusy(true);
+    try {
+      const dump: any = await backupFn();
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(
+        wb,
+        XLSX.utils.aoa_to_sheet([
+          ["Backup Koperasi SMP Negeri 36 Samarinda"],
+          ["Dibuat", dump.generated_at],
+          ["Versi", dump.version],
+        ]),
+        "META",
+      );
+      for (const [t, rows] of Object.entries(dump.tables as Record<string, any[]>)) {
+        const ws = rows.length
+          ? XLSX.utils.json_to_sheet(rows)
+          : XLSX.utils.aoa_to_sheet([["(kosong)"]]);
+        XLSX.utils.book_append_sheet(wb, ws, t.slice(0, 31));
+      }
+      XLSX.writeFile(wb, `backup-koperasi-${stamp()}.xlsx`);
+      toast.success("Backup Excel diunduh");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
 
   const [pw, setPw] = useState("");
   const [busy, setBusy] = useState(false);
@@ -116,6 +174,27 @@ function DatabasePage() {
         </h1>
         <p className="text-sm text-muted-foreground">Ringkasan seluruh tabel dan alat pemeliharaan data.</p>
       </div>
+
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Download className="w-4 h-4" />Backup Database
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Unduh salinan seluruh data koperasi (anggota, simpanan, pinjaman, angsuran, dan akun admin tanpa password) untuk arsip atau pemulihan manual.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={downloadBackupJSON} disabled={backupBusy}>
+              <FileJson className="w-4 h-4" />Backup JSON
+            </Button>
+            <Button variant="outline" onClick={downloadBackupXLSX} disabled={backupBusy}>
+              <FileSpreadsheet className="w-4 h-4" />Backup Excel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="py-3"><CardTitle className="text-base">Ringkasan Tabel</CardTitle></CardHeader>

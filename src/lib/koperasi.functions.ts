@@ -344,6 +344,29 @@ export const databaseStats = createServerFn({ method: "GET" }).handler(async () 
   return results;
 });
 
+export const backupDatabase = createServerFn({ method: "GET" }).handler(async () => {
+  await (await import("./gate.server")).requireSuper();
+  const sb = await admin();
+  const tables = ["anggota", "simpanan", "pinjaman", "angsuran", "admin_users"] as const;
+  const dump: Record<string, any[]> = {};
+  for (const t of tables) {
+    const { data, error } = await sb.from(t).select("*");
+    if (error) throw new Error(`${t}: ${error.message}`);
+    let rows = data ?? [];
+    if (t === "admin_users") {
+      // Never export password hashes
+      rows = rows.map(({ password_hash, ...rest }: any) => rest);
+    }
+    dump[t] = rows;
+  }
+  return {
+    generated_at: new Date().toISOString(),
+    app: "Koperasi SMP Negeri 36 Samarinda",
+    version: 1,
+    tables: dump,
+  };
+});
+
 export const truncateTable = createServerFn({ method: "POST" })
   .inputValidator((d: { table: "anggota" | "simpanan" | "pinjaman" | "angsuran"; superPassword: string }) => d)
   .handler(async ({ data }) => {
