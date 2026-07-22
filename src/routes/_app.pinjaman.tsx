@@ -411,6 +411,8 @@ function PinjamanPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <RecentActivity scope="pinjaman" title="Aktivitas Pinjaman & Angsuran" />
     </div>
   );
 }
