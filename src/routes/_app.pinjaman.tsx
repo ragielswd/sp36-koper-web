@@ -84,6 +84,9 @@ function PinjamanPage() {
 
   const { data: pinjaman } = useSuspenseQuery({ queryKey: ["pinjaman"], queryFn: () => listFn() });
   const { data: anggota } = useSuspenseQuery({ queryKey: ["anggota"], queryFn: () => anggotaFn() });
+  const settingsFn = useServerFn(getSettings);
+  const { data: settings } = useSuspenseQuery({ queryKey: ["settings"], queryFn: () => settingsFn() });
+  const koperasiWa = (settings as any)?.whatsapp_number ?? null;
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
