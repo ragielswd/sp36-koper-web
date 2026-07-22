@@ -44,11 +44,14 @@ function PinjamanDetailPage() {
   const detailFn = useServerFn(getPinjamanDetail);
   const createFn = useServerFn(createAngsuran);
   const delFn = useServerFn(deleteAngsuran);
+  const settingsFn = useServerFn(getSettings);
 
   const { data } = useSuspenseQuery({
     queryKey: ["pinjaman", id],
     queryFn: () => detailFn({ data: { id } }),
   });
+  const { data: settings } = useSuspenseQuery({ queryKey: ["settings"], queryFn: () => settingsFn() });
+  const koperasiWa = (settings as any)?.whatsapp_number ?? null;
 
   const p = data.pinjaman as any;
   const angsuran = (data.angsuran as Angsuran[]).slice().sort((a, b) => a.tanggal.localeCompare(b.tanggal));
