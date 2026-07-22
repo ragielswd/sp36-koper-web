@@ -165,7 +165,7 @@ export const getPinjamanDetail = createServerFn({ method: "GET" })
     const sb = await admin();
     const { data: pin, error } = await sb
       .from("pinjaman")
-      .select("*, anggota:anggota_id(id,nama,nip,jabatan)")
+      .select("*, anggota:anggota_id(id,nama,nip,jabatan,telepon)")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
@@ -194,7 +194,7 @@ export const createPinjaman = createServerFn({ method: "POST" })
     const sb = await admin();
     const { data: inserted, error } = await (sb.from("pinjaman") as any)
       .insert({ ...data, dibuat_oleh: s.data.nama ?? s.data.username ?? null })
-      .select("*, anggota:anggota_id(id,nama,nip,jabatan)")
+      .select("*, anggota:anggota_id(id,nama,nip,jabatan,telepon)")
       .single();
     if (error) throw new Error(error.message);
     return { ok: true, row: inserted };
