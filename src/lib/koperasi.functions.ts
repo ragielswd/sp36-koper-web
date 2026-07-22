@@ -152,7 +152,7 @@ export const listPinjaman = createServerFn({ method: "GET" }).handler(async () =
   const sb = await admin();
   const { data, error } = await sb
     .from("pinjaman")
-    .select("*, anggota:anggota_id(id,nama), angsuran(id,pokok,bunga,denda,tanggal)")
+    .select("*, anggota:anggota_id(id,nama,nip,telepon), angsuran(id,pokok,bunga,denda,tanggal)")
     .order("tanggal_pinjam", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
