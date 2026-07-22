@@ -20,6 +20,7 @@ import { useState } from "react";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { formatTanggal } from "@/lib/format";
 import { toast } from "sonner";
+import { RecentActivity } from "@/components/recent-activity";
 import { useRouteContext } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app/anggota")({
@@ -178,6 +179,8 @@ function AnggotaPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <RecentActivity scope="anggota" title="Aktivitas Anggota" />
     </div>
   );
 }

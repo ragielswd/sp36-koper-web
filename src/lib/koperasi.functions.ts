@@ -152,7 +152,7 @@ export const listPinjaman = createServerFn({ method: "GET" }).handler(async () =
   const sb = await admin();
   const { data, error } = await sb
     .from("pinjaman")
-    .select("*, anggota:anggota_id(id,nama), angsuran(id,pokok,bunga,denda,tanggal)")
+    .select("*, anggota:anggota_id(id,nama,nip,telepon), angsuran(id,pokok,bunga,denda,tanggal)")
     .order("tanggal_pinjam", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -165,7 +165,7 @@ export const getPinjamanDetail = createServerFn({ method: "GET" })
     const sb = await admin();
     const { data: pin, error } = await sb
       .from("pinjaman")
-      .select("*, anggota:anggota_id(id,nama,nip,jabatan)")
+      .select("*, anggota:anggota_id(id,nama,nip,jabatan,telepon)")
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
@@ -194,7 +194,7 @@ export const createPinjaman = createServerFn({ method: "POST" })
     const sb = await admin();
     const { data: inserted, error } = await (sb.from("pinjaman") as any)
       .insert({ ...data, dibuat_oleh: s.data.nama ?? s.data.username ?? null })
-      .select("*, anggota:anggota_id(id,nama,nip,jabatan)")
+      .select("*, anggota:anggota_id(id,nama,nip,jabatan,telepon)")
       .single();
     if (error) throw new Error(error.message);
     return { ok: true, row: inserted };
@@ -397,4 +397,160 @@ export const resetAllData = createServerFn({ method: "POST" })
       if (error) throw new Error(`${t}: ${error.message}`);
     }
     return { ok: true };
+  });
+
+// ---------- SETTINGS ----------
+export const getSettings = createServerFn({ method: "GET" }).handler(async () => {
+  await (await import("./gate.server")).requireAdmin();
+  const sb = await admin();
+  const { data, error } = await sb.from("koperasi_settings").select("*").eq("id", 1).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ?? { id: 1, whatsapp_number: null };
+});
+
+export const updateSettings = createServerFn({ method: "POST" })
+  .inputValidator((d: { whatsapp_number: string | null }) => d)
+  .handler(async ({ data }) => {
+    await (await import("./gate.server")).requireSuper();
+    const sb = await admin();
+    const { error } = await sb
+      .from("koperasi_settings")
+      .upsert({ id: 1, whatsapp_number: data.whatsapp_number, updated_at: new Date().toISOString() });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---------- RECENT ACTIVITY ----------
+type ActivityScope = "all" | "anggota" | "simpanan" | "pinjaman";
+
+export const recentActivity = createServerFn({ method: "GET" })
+  .inputValidator((d: { scope?: ActivityScope; limit?: number }) => d)
+  .handler(async ({ data }) => {
+    await (await import("./gate.server")).requireAdmin();
+    const sb = await admin();
+    const scope = data.scope ?? "all";
+    const limit = data.limit ?? 10;
+    const items: any[] = [];
+
+    async function pushAnggota() {
+      const { data } = await sb.from("anggota").select("id,nama,created_at").order("created_at", { ascending: false }).limit(limit);
+      (data ?? []).forEach((r: any) => items.push({
+        kind: "anggota", at: r.created_at, title: r.nama, subtitle: "Anggota terdaftar", by: null,
+      }));
+    }
+    async function pushSimpanan() {
+      const { data } = await sb.from("simpanan")
+        .select("id,tipe,jenis,jumlah,tanggal,created_at,dibuat_oleh,anggota:anggota_id(nama)")
+        .order("created_at", { ascending: false }).limit(limit);
+      (data ?? []).forEach((r: any) => items.push({
+        kind: "simpanan", at: r.created_at, title: r.anggota?.nama ?? "-",
+        subtitle: `${r.tipe === "setor" ? "Setor" : "Tarik"} ${r.jenis} · Rp ${Number(r.jumlah).toLocaleString("id-ID")}`,
+        by: r.dibuat_oleh,
+      }));
+    }
+    async function pushPinjaman() {
+      const { data } = await sb.from("pinjaman")
+        .select("id,pokok,tanggal_pinjam,created_at,dibuat_oleh,status,anggota:anggota_id(nama)")
+        .order("created_at", { ascending: false }).limit(limit);
+      (data ?? []).forEach((r: any) => items.push({
+        kind: "pinjaman", at: r.created_at, title: r.anggota?.nama ?? "-",
+        subtitle: `Pinjaman ${r.status} · Rp ${Number(r.pokok).toLocaleString("id-ID")}`,
+        by: r.dibuat_oleh,
+      }));
+    }
+    async function pushAngsuran() {
+      const { data } = await sb.from("angsuran")
+        .select("id,pokok,bunga,tanggal,created_at,dibuat_oleh,pinjaman:pinjaman_id(anggota:anggota_id(nama))")
+        .order("created_at", { ascending: false }).limit(limit);
+      (data ?? []).forEach((r: any) => items.push({
+        kind: "angsuran", at: r.created_at, title: r.pinjaman?.anggota?.nama ?? "-",
+        subtitle: `Angsuran · Rp ${(Number(r.pokok) + Number(r.bunga)).toLocaleString("id-ID")}`,
+        by: r.dibuat_oleh,
+      }));
+    }
+
+    if (scope === "all") await Promise.all([pushAnggota(), pushSimpanan(), pushPinjaman(), pushAngsuran()]);
+    else if (scope === "anggota") await pushAnggota();
+    else if (scope === "simpanan") await pushSimpanan();
+    else if (scope === "pinjaman") await Promise.all([pushPinjaman(), pushAngsuran()]);
+
+    items.sort((a, b) => (b.at ?? "").localeCompare(a.at ?? ""));
+    return items.slice(0, limit);
+  });
+
+// ---------- RESTORE ----------
+type RestoreDump = {
+  version?: number;
+  tables: {
+    anggota?: any[];
+    simpanan?: any[];
+    pinjaman?: any[];
+    angsuran?: any[];
+    admin_users?: any[];
+  };
+};
+
+const REQUIRED_COLS: Record<string, string[]> = {
+  anggota: ["id", "nama", "tanggal_bergabung", "aktif"],
+  simpanan: ["id", "anggota_id", "jenis", "tipe", "jumlah", "tanggal"],
+  pinjaman: ["id", "anggota_id", "pokok", "bunga_persen", "bunga_tipe", "tenor_bulan", "tanggal_pinjam", "status"],
+  angsuran: ["id", "pinjaman_id", "tanggal", "pokok", "bunga"],
+};
+
+function validateDump(dump: any): { ok: true; data: RestoreDump } | { ok: false; error: string } {
+  if (!dump || typeof dump !== "object") return { ok: false, error: "Format file tidak dikenali." };
+  const tables = dump.tables && typeof dump.tables === "object" ? dump.tables : null;
+  if (!tables) return { ok: false, error: "Struktur tidak valid: field 'tables' tidak ditemukan." };
+  for (const t of ["anggota", "simpanan", "pinjaman", "angsuran"] as const) {
+    const rows = tables[t];
+    if (rows === undefined) continue;
+    if (!Array.isArray(rows)) return { ok: false, error: `Tabel ${t} bukan array.` };
+    if (rows.length > 0) {
+      const required = REQUIRED_COLS[t];
+      const first = rows[0];
+      for (const col of required) {
+        if (!(col in first)) return { ok: false, error: `Tabel ${t} kekurangan kolom '${col}'.` };
+      }
+    }
+  }
+  return { ok: true, data: dump as RestoreDump };
+}
+
+export const restoreDatabase = createServerFn({ method: "POST" })
+  .inputValidator((d: { dump: any; superPassword: string; includeAdminUsers?: boolean }) => d)
+  .handler(async ({ data }) => {
+    const { requireSuper, verifySuperPassword } = await import("./gate.server");
+    await requireSuper();
+    const ok = await verifySuperPassword(data.superPassword);
+    if (!ok) throw new Error("Password super admin salah.");
+
+    const valid = validateDump(data.dump);
+    if (!valid.ok) throw new Error(valid.error);
+    const dump = valid.data;
+
+    const sb = await admin();
+    // Wipe in dependency order
+    for (const t of ["angsuran", "pinjaman", "simpanan", "anggota"] as const) {
+      const { error } = await sb.from(t).delete().not("id", "is", null);
+      if (error) throw new Error(`Bersihkan ${t}: ${error.message}`);
+    }
+
+    const stats: Record<string, number> = {};
+    // Insert in parent order. Strip unknown fields is not required — Postgres will error on unknown cols.
+    for (const t of ["anggota", "simpanan", "pinjaman", "angsuran"] as const) {
+      const rows = dump.tables[t];
+      if (!rows || rows.length === 0) { stats[t] = 0; continue; }
+      // Chunk to avoid huge payloads
+      const chunk = 500;
+      let inserted = 0;
+      for (let i = 0; i < rows.length; i += chunk) {
+        const slice = rows.slice(i, i + chunk);
+        const { error } = await sb.from(t).insert(slice);
+        if (error) throw new Error(`Impor ${t}: ${error.message}`);
+        inserted += slice.length;
+      }
+      stats[t] = inserted;
+    }
+
+    return { ok: true, stats };
   });

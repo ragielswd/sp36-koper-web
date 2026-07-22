@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { RecentActivity } from "@/components/recent-activity";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { dashboardRingkasan } from "@/lib/koperasi.functions";
@@ -97,6 +98,8 @@ function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <RecentActivity scope="all" title="Aktivitas Terkini" />
     </div>
   );
 }

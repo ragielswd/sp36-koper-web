@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useRouter, useRouteContext } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getPinjamanDetail, createAngsuran, deleteAngsuran } from "@/lib/koperasi.functions";
+import { getPinjamanDetail, createAngsuran, deleteAngsuran, getSettings } from "@/lib/koperasi.functions";
+import { WhatsAppTagihanButton } from "@/components/whatsapp-tagihan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,11 +44,14 @@ function PinjamanDetailPage() {
   const detailFn = useServerFn(getPinjamanDetail);
   const createFn = useServerFn(createAngsuran);
   const delFn = useServerFn(deleteAngsuran);
+  const settingsFn = useServerFn(getSettings);
 
   const { data } = useSuspenseQuery({
     queryKey: ["pinjaman", id],
     queryFn: () => detailFn({ data: { id } }),
   });
+  const { data: settings } = useSuspenseQuery({ queryKey: ["settings"], queryFn: () => settingsFn() });
+  const koperasiWa = (settings as any)?.whatsapp_number ?? null;
 
   const p = data.pinjaman as any;
   const angsuran = (data.angsuran as Angsuran[]).slice().sort((a, b) => a.tanggal.localeCompare(b.tanggal));
@@ -144,9 +148,26 @@ function PinjamanDetailPage() {
             {p.tgl_jatuh_tempo ? ` · jatuh tempo tiap tgl. ${p.tgl_jatuh_tempo}` : ""}
           </p>
         </div>
-        {p.status === "aktif" && <Badge>Aktif</Badge>}
-        {p.status === "lunas" && <Badge variant="secondary">Lunas</Badge>}
-        {p.status === "macet" && <Badge variant="destructive">Macet</Badge>}
+        <div className="flex items-center gap-2">
+          {p.status === "aktif" && <Badge>Aktif</Badge>}
+          {p.status === "lunas" && <Badge variant="secondary">Lunas</Badge>}
+          {p.status === "macet" && <Badge variant="destructive">Macet</Badge>}
+          {p.status === "aktif" && sisa > 0 && (
+            <WhatsAppTagihanButton
+              namaAnggota={p.anggota?.nama ?? "-"}
+              teleponAnggota={p.anggota?.telepon}
+              koperasiWa={koperasiWa}
+              jatuhTempo={p.tgl_jatuh_tempo}
+              sisa={sisa}
+              hariMenuju={null}
+              trigger={
+                <Button variant="outline" size="sm" className="text-emerald-700 border-emerald-200 hover:bg-emerald-50">
+                  Kirim Tagihan WhatsApp
+                </Button>
+              }
+            />
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

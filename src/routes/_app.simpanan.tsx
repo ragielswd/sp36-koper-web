@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, ArrowDownCircle, ArrowUpCircle, Pencil, Printer } from "lucide-react";
 import { formatTanggal, rupiah } from "@/lib/format";
 import { toast } from "sonner";
+import { RecentActivity } from "@/components/recent-activity";
 import { MoneyInput } from "@/components/money-input";
 import { printHtml } from "@/lib/print";
 import { renderStrukSimpanan } from "@/lib/dokumen";
@@ -285,6 +286,8 @@ function SimpananPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <RecentActivity scope="simpanan" title="Aktivitas Simpanan" />
     </div>
   );
 }

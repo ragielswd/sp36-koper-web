@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listPinjaman, createPinjaman, updatePinjaman, deletePinjaman, listAnggota, updatePinjamanStatus } from "@/lib/koperasi.functions";
+import { listPinjaman, createPinjaman, updatePinjaman, deletePinjaman, listAnggota, updatePinjamanStatus, getSettings } from "@/lib/koperasi.functions";
+import { RecentActivity } from "@/components/recent-activity";
+import { WhatsAppTagihanButton } from "@/components/whatsapp-tagihan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,6 +84,9 @@ function PinjamanPage() {
 
   const { data: pinjaman } = useSuspenseQuery({ queryKey: ["pinjaman"], queryFn: () => listFn() });
   const { data: anggota } = useSuspenseQuery({ queryKey: ["anggota"], queryFn: () => anggotaFn() });
+  const settingsFn = useServerFn(getSettings);
+  const { data: settings } = useSuspenseQuery({ queryKey: ["settings"], queryFn: () => settingsFn() });
+  const koperasiWa = (settings as any)?.whatsapp_number ?? null;
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -219,10 +224,20 @@ function PinjamanPage() {
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">tiap tgl. {p.tgl_jatuh_tempo}</span>
               {warn && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  {hari === 0 ? "hari ini" : hari && hari < 0 ? "lewat" : `${hari} hari lagi`}
-                </Badge>
+                <>
+                  <Badge variant="destructive" className="gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    {hari === 0 ? "hari ini" : hari && hari < 0 ? "lewat" : `${hari} hari lagi`}
+                  </Badge>
+                  <WhatsAppTagihanButton
+                    namaAnggota={p.anggota?.nama ?? "-"}
+                    teleponAnggota={p.anggota?.telepon}
+                    koperasiWa={koperasiWa}
+                    jatuhTempo={p.tgl_jatuh_tempo}
+                    sisa={sisa}
+                    hariMenuju={hari}
+                  />
+                </>
               )}
             </div>
           ) : (
@@ -396,6 +411,8 @@ function PinjamanPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <RecentActivity scope="pinjaman" title="Aktivitas Pinjaman & Angsuran" />
     </div>
   );
 }
