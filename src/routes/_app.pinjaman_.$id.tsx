@@ -148,9 +148,26 @@ function PinjamanDetailPage() {
             {p.tgl_jatuh_tempo ? ` · jatuh tempo tiap tgl. ${p.tgl_jatuh_tempo}` : ""}
           </p>
         </div>
-        {p.status === "aktif" && <Badge>Aktif</Badge>}
-        {p.status === "lunas" && <Badge variant="secondary">Lunas</Badge>}
-        {p.status === "macet" && <Badge variant="destructive">Macet</Badge>}
+        <div className="flex items-center gap-2">
+          {p.status === "aktif" && <Badge>Aktif</Badge>}
+          {p.status === "lunas" && <Badge variant="secondary">Lunas</Badge>}
+          {p.status === "macet" && <Badge variant="destructive">Macet</Badge>}
+          {p.status === "aktif" && sisa > 0 && (
+            <WhatsAppTagihanButton
+              namaAnggota={p.anggota?.nama ?? "-"}
+              teleponAnggota={p.anggota?.telepon}
+              koperasiWa={koperasiWa}
+              jatuhTempo={p.tgl_jatuh_tempo}
+              sisa={sisa}
+              hariMenuju={null}
+              trigger={
+                <Button variant="outline" size="sm" className="text-emerald-700 border-emerald-200 hover:bg-emerald-50">
+                  Kirim Tagihan WhatsApp
+                </Button>
+              }
+            />
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
