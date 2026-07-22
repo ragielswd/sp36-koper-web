@@ -130,6 +130,24 @@ export type Database = {
           },
         ]
       }
+      koperasi_settings: {
+        Row: {
+          id: number
+          updated_at: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          id?: number
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          id?: number
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
       pinjaman: {
         Row: {
           anggota_id: string
