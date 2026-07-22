@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listPinjaman, createPinjaman, updatePinjaman, deletePinjaman, listAnggota, updatePinjamanStatus } from "@/lib/koperasi.functions";
+import { listPinjaman, createPinjaman, updatePinjaman, deletePinjaman, listAnggota, updatePinjamanStatus, getSettings } from "@/lib/koperasi.functions";
+import { RecentActivity } from "@/components/recent-activity";
+import { WhatsAppTagihanButton } from "@/components/whatsapp-tagihan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
