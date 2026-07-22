@@ -224,10 +224,20 @@ function PinjamanPage() {
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">tiap tgl. {p.tgl_jatuh_tempo}</span>
               {warn && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  {hari === 0 ? "hari ini" : hari && hari < 0 ? "lewat" : `${hari} hari lagi`}
-                </Badge>
+                <>
+                  <Badge variant="destructive" className="gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    {hari === 0 ? "hari ini" : hari && hari < 0 ? "lewat" : `${hari} hari lagi`}
+                  </Badge>
+                  <WhatsAppTagihanButton
+                    namaAnggota={p.anggota?.nama ?? "-"}
+                    teleponAnggota={p.anggota?.telepon}
+                    koperasiWa={koperasiWa}
+                    jatuhTempo={p.tgl_jatuh_tempo}
+                    sisa={sisa}
+                    hariMenuju={hari}
+                  />
+                </>
               )}
             </div>
           ) : (
